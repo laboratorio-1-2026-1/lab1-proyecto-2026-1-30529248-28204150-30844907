@@ -18,12 +18,13 @@ model Rol {
   descripcion String?
   usuarios    Usuario[]
 
-  @@map("roles")
+  @@map("rol")
 }
 
 model Usuario {
   id         Int         @id @default(autoincrement())
   idRol      Int         @map("idRol")
+  descripcion String?
   email      String      @unique
   password   String
   estado     String
@@ -32,12 +33,14 @@ model Usuario {
   cliente    Cliente[]
   entrenador Entrenador[]
 
-  @@map("usuarios")
+  @@map("Usuario")
 }
 
 model Cliente {
-  idUsuario    Int                    @id @map("idUsuario")
+  id           Int                    @id @default(autoincrement())
+  idUsuario    Int                    @map("idUsuario")
   cedula       String                 @unique
+  nombre       String
   apellido     String
   telefono     String?
   usuario      Usuario                @relation(fields: [idUsuario], references: [id])
@@ -47,7 +50,7 @@ model Cliente {
   compras      Compra[]
   controlAccesos ControlAcceso[]
 
-  @@map("clientes")
+  @@map("Cliente")
 }
 
 model Entrenador {
@@ -58,7 +61,7 @@ model Entrenador {
   sesiones     Sesion[]
   evaluaciones EvaluacionBiometrica[]
 
-  @@map("entrenadores")
+  @@map("Entrenador")
 }
 
 // ==================== MAQUINAS Y CATEGORIAS ====================
@@ -69,7 +72,7 @@ model CategoriaDeMaquina {
   descripcion String?
   maquinas    Maquina[]
 
-  @@map("categorias_maquinas")
+  @@map("CategoriaMaquina")
 }
 
 model Maquina {
@@ -82,7 +85,7 @@ model Maquina {
   categoria    CategoriaDeMaquina @relation(fields: [idCategoria], references: [id])
   tickets      TicketMantenimiento[]
 
-  @@map("maquinas")
+  @@map("Maquina")
 }
 
 model TicketMantenimiento {
@@ -96,7 +99,7 @@ model TicketMantenimiento {
   maquina           Maquina   @relation(fields: [idMaquina], references: [id])
   usuario           Usuario   @relation(fields: [idUsuario], references: [id])
 
-  @@map("tickets_mantenimiento")
+  @@map("TicketMantenimiento")
 }
 
 // ==================== DISCIPLINAS Y SESIONES ====================
@@ -107,7 +110,7 @@ model Disciplina {
   descripcion String?
   sesiones    Sesion[]
 
-  @@map("disciplinas")
+  @@map("Disciplina")
 }
 
 model Sesion {
@@ -123,7 +126,7 @@ model Sesion {
   entrenador     Entrenador @relation(fields: [idEntrenador], references: [id])
   reservas       Reserva[]
 
-  @@map("sesiones")
+  @@map("Sesion")
 }
 
 // ==================== RESERVAS Y CONTROL ====================
@@ -134,11 +137,11 @@ model Reserva {
   idSesion   Int       @map("idSesion")
   fecha      DateTime
   estado     String
-  cliente    Cliente   @relation(fields: [idCliente], references: [idUsuario])
+  cliente    Cliente   @relation(fields: [idCliente], references: [id])
   sesion     Sesion    @relation(fields: [idSesion], references: [id])
 
   @@unique([idCliente, idSesion])
-  @@map("reservas")
+  @@map("Reserva")
 }
 
 model ControlAcceso {
@@ -147,9 +150,9 @@ model ControlAcceso {
   fechaHoraEntrada  DateTime  @map("fechaHoraEntrada")
   estadoAcceso      String    @map("estadoAcceso")
   motivoRechazo     String?   @map("motivoRechazo")
-  cliente           Cliente   @relation(fields: [idCliente], references: [idUsuario])
+  cliente           Cliente   @relation(fields: [idCliente], references: [id])
 
-  @@map("control_accesos")
+  @@map("ControlAcceso")
 }
 
 // ==================== EVALUACIONES ====================
@@ -163,10 +166,10 @@ model EvaluacionBiometrica {
   estatura          Float
   porcentajeGrasa   Float?
   observaciones     String?
-  cliente           Cliente    @relation(fields: [idCliente], references: [idUsuario])
+  cliente           Cliente    @relation(fields: [idCliente], references: [id])
   entrenador        Entrenador @relation(fields: [idEntrenador], references: [id])
 
-  @@map("evaluaciones_biometricas")
+  @@map("EvaluacionBiometrica")
 }
 
 // ==================== MEMBRESIAS Y PAGOS ====================
@@ -179,7 +182,7 @@ model Suscripcion {
   diasDuracion Int
   membresias  Membresia[]
 
-  @@map("suscripciones")
+  @@map("Suscripcion")
 }
 
 model Membresia {
@@ -189,11 +192,11 @@ model Membresia {
   fechaInicio    DateTime
   fechaFin       DateTime
   estado         String
-  cliente        Cliente     @relation(fields: [idCliente], references: [idUsuario])
+  cliente        Cliente     @relation(fields: [idCliente], references: [id])
   suscripcion    Suscripcion @relation(fields: [idSuscripcion], references: [id])
   pagos          Pago[]
 
-  @@map("membresias")
+  @@map("Membresia")
 }
 
 model Pago {
@@ -204,7 +207,7 @@ model Pago {
   metodoPago   String
   membresia    Membresia  @relation(fields: [idMembresia], references: [id])
 
-  @@map("pagos")
+  @@map("Pago")
 }
 
 // ==================== COMPRAS Y PRODUCTOS ====================
@@ -214,10 +217,10 @@ model Compra {
   idCliente  Int            @map("idCliente")
   fecha      DateTime
   monto      Float
-  cliente    Cliente        @relation(fields: [idCliente], references: [idUsuario])
+  cliente    Cliente        @relation(fields: [idCliente], references: [id])
   detalles   DetalleCompra[]
 
-  @@map("compras")
+  @@map("Compra")
 }
 
 model DetalleCompra {
@@ -229,7 +232,7 @@ model DetalleCompra {
   compra         Compra   @relation(fields: [idCompra], references: [id])
   producto       Producto @relation(fields: [idProducto], references: [id])
 
-  @@map("detalles_compras")
+  @@map("DetallesCompra")
 }
 
 model Producto {
@@ -240,5 +243,5 @@ model Producto {
   stock       Int
   detalles    DetalleCompra[]
 
-  @@map("productos")
+  @@map("Producto")
 }
