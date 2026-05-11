@@ -1,0 +1,244 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ==================== USUARIO Y ROLES ====================
+
+model Rol {
+  id          Int       @id @default(autoincrement())
+  nombre      String
+  descripcion String?
+  usuarios    Usuario[]
+
+  @@map("roles")
+}
+
+model Usuario {
+  id         Int         @id @default(autoincrement())
+  idRol      Int         @map("idRol")
+  email      String      @unique
+  password   String
+  estado     String
+  rol        Rol         @relation(fields: [idRol], references: [id])
+  ticketMantenimiento     TicketMantenimiento[]
+  cliente    Cliente[]
+  entrenador Entrenador[]
+
+  @@map("usuarios")
+}
+
+model Cliente {
+  idUsuario    Int                    @id @map("idUsuario")
+  cedula       String                 @unique
+  apellido     String
+  telefono     String?
+  usuario      Usuario                @relation(fields: [idUsuario], references: [id])
+  reservas     Reserva[]
+  evaluaciones EvaluacionBiometrica[]
+  membresias   Membresia[]
+  compras      Compra[]
+  controlAccesos ControlAcceso[]
+
+  @@map("clientes")
+}
+
+model Entrenador {
+  id           Int       @id @default(autoincrement())
+  idUsuario    Int       @map("idUsuario")
+  especialidad String
+  usuario      Usuario   @relation(fields: [idUsuario], references: [id])
+  sesiones     Sesion[]
+  evaluaciones EvaluacionBiometrica[]
+
+  @@map("entrenadores")
+}
+
+// ==================== MAQUINAS Y CATEGORIAS ====================
+
+model CategoriaDeMaquina {
+  id          Int       @id @default(autoincrement())
+  nombre      String
+  descripcion String?
+  maquinas    Maquina[]
+
+  @@map("categorias_maquinas")
+}
+
+model Maquina {
+  id           Int       @id @default(autoincrement())
+  codigo       Int       @unique
+  idCategoria  Int       @map("idCategoria")
+  nombre       String
+  descripcion  String?
+  estado       String
+  categoria    CategoriaDeMaquina @relation(fields: [idCategoria], references: [id])
+  tickets      TicketMantenimiento[]
+
+  @@map("maquinas")
+}
+
+model TicketMantenimiento {
+  id                Int       @id @default(autoincrement())
+  idMaquina         Int       @map("idMaquina")
+  idUsuario         Int       @map("idUsuario")
+  fechaFalla        DateTime
+  descripcionFalla  String
+  fechaResolucion   DateTime?
+  costo             Float?
+  maquina           Maquina   @relation(fields: [idMaquina], references: [id])
+  usuario           Usuario   @relation(fields: [idUsuario], references: [id])
+
+  @@map("tickets_mantenimiento")
+}
+
+// ==================== DISCIPLINAS Y SESIONES ====================
+
+model Disciplina {
+  id          Int       @id @default(autoincrement())
+  nombre      String
+  descripcion String?
+  sesiones    Sesion[]
+
+  @@map("disciplinas")
+}
+
+model Sesion {
+  id             Int        @id @default(autoincrement())
+  idDisciplina   Int        @map("idDisciplina")
+  idEntrenador   Int        @map("idEntrenador")
+  fecha          DateTime
+  horaInicio     DateTime   @map("horaInicio")
+  horaFin        DateTime   @map("horaFin")
+  limiteDeCupos  Int
+  estado         String
+  disciplina     Disciplina @relation(fields: [idDisciplina], references: [id])
+  entrenador     Entrenador @relation(fields: [idEntrenador], references: [id])
+  reservas       Reserva[]
+
+  @@map("sesiones")
+}
+
+// ==================== RESERVAS Y CONTROL ====================
+
+model Reserva {
+  id         Int       @id @default(autoincrement())
+  idCliente  Int       @map("idCliente")
+  idSesion   Int       @map("idSesion")
+  fecha      DateTime
+  estado     String
+  cliente    Cliente   @relation(fields: [idCliente], references: [idUsuario])
+  sesion     Sesion    @relation(fields: [idSesion], references: [id])
+
+  @@unique([idCliente, idSesion])
+  @@map("reservas")
+}
+
+model ControlAcceso {
+  id                Int       @id @default(autoincrement())
+  idCliente         Int       @map("idCliente")
+  fechaHoraEntrada  DateTime  @map("fechaHoraEntrada")
+  estadoAcceso      String    @map("estadoAcceso")
+  motivoRechazo     String?   @map("motivoRechazo")
+  cliente           Cliente   @relation(fields: [idCliente], references: [idUsuario])
+
+  @@map("control_accesos")
+}
+
+// ==================== EVALUACIONES ====================
+
+model EvaluacionBiometrica {
+  id                Int        @id @default(autoincrement())
+  idCliente         Int        @map("idCliente")
+  idEntrenador      Int        @map("idEntrenador")
+  fechaEvaluacion   DateTime
+  peso              Float
+  estatura          Float
+  porcentajeGrasa   Float?
+  observaciones     String?
+  cliente           Cliente    @relation(fields: [idCliente], references: [idUsuario])
+  entrenador        Entrenador @relation(fields: [idEntrenador], references: [id])
+
+  @@map("evaluaciones_biometricas")
+}
+
+// ==================== MEMBRESIAS Y PAGOS ====================
+
+model Suscripcion {
+  id          Int         @id @default(autoincrement())
+  nombre      String
+  descripcion String?
+  costo       Float
+  diasDuracion Int
+  membresias  Membresia[]
+
+  @@map("suscripciones")
+}
+
+model Membresia {
+  id             Int         @id @default(autoincrement())
+  idCliente      Int         @map("idCliente")
+  idSuscripcion  Int         @map("idSuscripcion")
+  fechaInicio    DateTime
+  fechaFin       DateTime
+  estado         String
+  cliente        Cliente     @relation(fields: [idCliente], references: [idUsuario])
+  suscripcion    Suscripcion @relation(fields: [idSuscripcion], references: [id])
+  pagos          Pago[]
+
+  @@map("membresias")
+}
+
+model Pago {
+  id           Int        @id @default(autoincrement())
+  idMembresia  Int        @map("idMembresia")
+  monto        Float
+  fechaPago    DateTime
+  metodoPago   String
+  membresia    Membresia  @relation(fields: [idMembresia], references: [id])
+
+  @@map("pagos")
+}
+
+// ==================== COMPRAS Y PRODUCTOS ====================
+
+model Compra {
+  id         Int            @id @default(autoincrement())
+  idCliente  Int            @map("idCliente")
+  fecha      DateTime
+  monto      Float
+  cliente    Cliente        @relation(fields: [idCliente], references: [idUsuario])
+  detalles   DetalleCompra[]
+
+  @@map("compras")
+}
+
+model DetalleCompra {
+  id             Int      @id @default(autoincrement())
+  idCompra       Int      @map("idCompra")
+  idProducto     Int      @map("idProducto")
+  cantidad       Int
+  precioUnitario Float
+  compra         Compra   @relation(fields: [idCompra], references: [id])
+  producto       Producto @relation(fields: [idProducto], references: [id])
+
+  @@map("detalles_compras")
+}
+
+model Producto {
+  id          Int            @id @default(autoincrement())
+  nombre      String
+  descripcion String?
+  precio      Float
+  stock       Int
+  detalles    DetalleCompra[]
+
+  @@map("productos")
+}
