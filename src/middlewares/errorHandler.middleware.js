@@ -1,4 +1,3 @@
-// src/middlewares/errorHandler.middleware.js
 const { HTTP_STATUS, CODIGOS_ERROR, MENSAJES } = require('../config/constantes');
 
 const errorHandler = (err, req, res, next) => {

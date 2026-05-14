@@ -1,137 +1,3 @@
-/*
-  Warnings:
-
-  - You are about to drop the `categorias_maquinas` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `clientes` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `compras` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `control_accesos` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `detalles_compras` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `disciplinas` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `entrenadores` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `evaluaciones_biometricas` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `maquinas` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `membresias` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `pagos` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `productos` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `reservas` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `roles` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `sesiones` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `suscripciones` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `tickets_mantenimiento` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `usuarios` table. If the table is not empty, all the data it contains will be lost.
-
-*/
--- DropForeignKey
-ALTER TABLE "clientes" DROP CONSTRAINT "clientes_idUsuario_fkey";
-
--- DropForeignKey
-ALTER TABLE "compras" DROP CONSTRAINT "compras_idCliente_fkey";
-
--- DropForeignKey
-ALTER TABLE "control_accesos" DROP CONSTRAINT "control_accesos_idCliente_fkey";
-
--- DropForeignKey
-ALTER TABLE "detalles_compras" DROP CONSTRAINT "detalles_compras_idCompra_fkey";
-
--- DropForeignKey
-ALTER TABLE "detalles_compras" DROP CONSTRAINT "detalles_compras_idProducto_fkey";
-
--- DropForeignKey
-ALTER TABLE "entrenadores" DROP CONSTRAINT "entrenadores_idUsuario_fkey";
-
--- DropForeignKey
-ALTER TABLE "evaluaciones_biometricas" DROP CONSTRAINT "evaluaciones_biometricas_idCliente_fkey";
-
--- DropForeignKey
-ALTER TABLE "evaluaciones_biometricas" DROP CONSTRAINT "evaluaciones_biometricas_idEntrenador_fkey";
-
--- DropForeignKey
-ALTER TABLE "maquinas" DROP CONSTRAINT "maquinas_idCategoria_fkey";
-
--- DropForeignKey
-ALTER TABLE "membresias" DROP CONSTRAINT "membresias_idCliente_fkey";
-
--- DropForeignKey
-ALTER TABLE "membresias" DROP CONSTRAINT "membresias_idSuscripcion_fkey";
-
--- DropForeignKey
-ALTER TABLE "pagos" DROP CONSTRAINT "pagos_idMembresia_fkey";
-
--- DropForeignKey
-ALTER TABLE "reservas" DROP CONSTRAINT "reservas_idCliente_fkey";
-
--- DropForeignKey
-ALTER TABLE "reservas" DROP CONSTRAINT "reservas_idSesion_fkey";
-
--- DropForeignKey
-ALTER TABLE "sesiones" DROP CONSTRAINT "sesiones_idDisciplina_fkey";
-
--- DropForeignKey
-ALTER TABLE "sesiones" DROP CONSTRAINT "sesiones_idEntrenador_fkey";
-
--- DropForeignKey
-ALTER TABLE "tickets_mantenimiento" DROP CONSTRAINT "tickets_mantenimiento_idMaquina_fkey";
-
--- DropForeignKey
-ALTER TABLE "tickets_mantenimiento" DROP CONSTRAINT "tickets_mantenimiento_idUsuario_fkey";
-
--- DropForeignKey
-ALTER TABLE "usuarios" DROP CONSTRAINT "usuarios_idRol_fkey";
-
--- DropTable
-DROP TABLE "categorias_maquinas";
-
--- DropTable
-DROP TABLE "clientes";
-
--- DropTable
-DROP TABLE "compras";
-
--- DropTable
-DROP TABLE "control_accesos";
-
--- DropTable
-DROP TABLE "detalles_compras";
-
--- DropTable
-DROP TABLE "disciplinas";
-
--- DropTable
-DROP TABLE "entrenadores";
-
--- DropTable
-DROP TABLE "evaluaciones_biometricas";
-
--- DropTable
-DROP TABLE "maquinas";
-
--- DropTable
-DROP TABLE "membresias";
-
--- DropTable
-DROP TABLE "pagos";
-
--- DropTable
-DROP TABLE "productos";
-
--- DropTable
-DROP TABLE "reservas";
-
--- DropTable
-DROP TABLE "roles";
-
--- DropTable
-DROP TABLE "sesiones";
-
--- DropTable
-DROP TABLE "suscripciones";
-
--- DropTable
-DROP TABLE "tickets_mantenimiento";
-
--- DropTable
-DROP TABLE "usuarios";
-
 -- CreateTable
 CREATE TABLE "rol" (
     "id" SERIAL NOT NULL,
@@ -145,6 +11,7 @@ CREATE TABLE "rol" (
 CREATE TABLE "Usuario" (
     "id" SERIAL NOT NULL,
     "idRol" INTEGER NOT NULL,
+    "descripcion" TEXT,
     "email" TEXT NOT NULL,
     "password" TEXT NOT NULL,
     "estado" TEXT NOT NULL,
@@ -333,10 +200,16 @@ CREATE TABLE "Producto" (
 );
 
 -- CreateIndex
+CREATE UNIQUE INDEX "rol_nombre_key" ON "rol"("nombre");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Usuario_email_key" ON "Usuario"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Cliente_cedula_key" ON "Cliente"("cedula");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "CategoriaMaquina_nombre_key" ON "CategoriaMaquina"("nombre");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Maquina_codigo_key" ON "Maquina"("codigo");

@@ -4,13 +4,13 @@ const { Pool } = require('pg');
 
 // Configurar el pool de conexiones de PostgreSQL
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.DATABASE_URL || 'postgresql://postgres:Admin@localhost:5433/smartgym?schema=public',
 });
 
-// Crear adapter para Prisma
+// Adaptador para Prisma7 con PostgreSQL
 const adapter = new PrismaPg(pool);
 
-// Crear instancia de Prisma Client con el adapter
+// Crear instancia de Prisma Client con el adaptador
 const prisma = new PrismaClient({ adapter });
 
 // Manejar desconexión al cerrar la aplicación

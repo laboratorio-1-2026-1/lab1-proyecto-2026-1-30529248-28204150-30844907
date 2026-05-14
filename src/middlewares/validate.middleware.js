@@ -1,10 +1,8 @@
-// src/middlewares/validate.middleware.js
 const { validationResult } = require('express-validator');
 const { HTTP_STATUS, CODIGOS_ERROR } = require('../config/constantes');
 
 const validate = (validations) => {
   return async (req, res, next) => {
-    // Ejecutar todas las validaciones
     await Promise.all(validations.map(validation => validation.run(req)));
 
     const errors = validationResult(req);

@@ -14,7 +14,7 @@ datasource db {
 
 model Rol {
   id          Int       @id @default(autoincrement())
-  nombre      String
+  nombre      String    @unique
   descripcion String?
   usuarios    Usuario[]
 
@@ -68,7 +68,7 @@ model Entrenador {
 
 model CategoriaDeMaquina {
   id          Int       @id @default(autoincrement())
-  nombre      String
+  nombre      String    @unique
   descripcion String?
   maquinas    Maquina[]
 

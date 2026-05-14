@@ -6,16 +6,16 @@ const options = {
     info: {
       title: 'SmartGym API',
       version: '1.0.0',
-      description: 'API para gestión integral de gimnasios',
+      description: 'API para gestión integral de gimnasios - CRUD completo de usuarios y roles',
       contact: {
-        name: 'Equipo SmartGym',
-        email: 'smartgym@ucla.edu.ve'
+        name: 'SmartGym Team',
+        email: 'soporte@smartgym.com'
       }
     },
     servers: [
       {
-        url: 'http://localhost:3000/api/v1',
-        description: 'Servidor de Desarrollo'
+        url: 'http://localhost:3000',
+        description: 'Servidor de desarrollo'
       }
     ],
     components: {
@@ -24,19 +24,11 @@ const options = {
           type: 'http',
           scheme: 'bearer',
           bearerFormat: 'JWT',
-          description: 'Ingrese el token JWT: Bearer <token>'
+          description: 'Ingrese el token JWT obtenido en el login'
         }
       },
       schemas: {
-        ErrorResponse: {
-          type: 'object',
-          properties: {
-            error: { type: 'string' },
-            codigoInterno: { type: 'string' },
-            mensaje: { type: 'string' },
-            timestamp: { type: 'string', format: 'date-time' }
-          }
-        },
+        // Modelo Login
         LoginRequest: {
           type: 'object',
           required: ['email', 'password'],
@@ -48,37 +40,101 @@ const options = {
         LoginResponse: {
           type: 'object',
           properties: {
-            message: { type: 'string' },
-            token: { type: 'string' },
-            usuario: {
+            success: { type: 'boolean', example: true },
+            message: { type: 'string', example: 'Login exitoso' },
+            data: {
               type: 'object',
               properties: {
-                id: { type: 'integer' },
-                email: { type: 'string' },
-                rol: { type: 'string' },
-                estado: { type: 'string' }
+                token: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIs...' },
+                usuario: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'integer', example: 1 },
+                    email: { type: 'string', example: 'admin@smartgym.com' },
+                    nombre: { type: 'string', example: 'Admin' },
+                    apellido: { type: 'string', example: 'Sistema' }
+                  }
+                }
               }
             }
           }
         },
-        RegisterRequest: {
+        // Modelo Usuario
+        UsuarioRequest: {
           type: 'object',
-          required: ['email', 'password', 'nombre', 'apellido', 'cedula'],
+          required: ['email', 'password', 'nombre', 'apellido', 'cedula', 'rolNombre'],
           properties: {
-            email: { type: 'string', format: 'email' },
-            password: { type: 'string', minLength: 6 },
-            nombre: { type: 'string' },
-            apellido: { type: 'string' },
-            cedula: { type: 'string' },
-            telefono: { type: 'string' },
-            idRol: { type: 'integer', enum: [1, 2, 3, 4], default: 4 }
+            email: { type: 'string', format: 'email', example: 'nuevo@test.com' },
+            password: { type: 'string', format: 'password', example: '123456' },
+            nombre: { type: 'string', example: 'Juan' },
+            apellido: { type: 'string', example: 'Pérez' },
+            cedula: { type: 'string', example: 'V-12345678' },
+            telefono: { type: 'string', example: '04121234567' },
+            rolNombre: { type: 'string', enum: ['ADMIN', 'FINANZAS', 'ENTRENADOR', 'CLIENTE'], example: 'CLIENTE' },
+            descripcion: { type: 'string', example: 'Usuario de prueba' },
+            especialidad: { type: 'string', example: 'Crossfit' } 
+          }
+        },
+        UsuarioResponse: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            message: { type: 'string' },
+            data: {
+              type: 'object',
+              properties: {
+                id: { type: 'integer' },
+                email: { type: 'string' },
+                nombre: { type: 'string' },
+                apellido: { type: 'string' },
+                cedula: { type: 'string' },
+                telefono: { type: 'string' },
+                rol: { type: 'string' },
+                estado: { type: 'string' },
+                tipoUsuario: { type: 'string' }
+              }
+            }
+          }
+        },
+        
+        // Modelo Rol
+        RolRequest: {
+          type: 'object',
+          required: ['nombre'],
+          properties: {
+            nombre: { type: 'string', example: 'NUEVO_ROL' },
+            descripcion: { type: 'string', example: 'Descripción del nuevo rol' }
+          }
+        },
+        RolResponse: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            message: { type: 'string' },
+            data: {
+              type: 'object',
+              properties: {
+                id: { type: 'integer' },
+                nombre: { type: 'string' },
+                descripcion: { type: 'string' }
+              }
+            }
+          }
+        },
+        ErrorResponse: {
+          type: 'object',
+          properties: {
+            error: { type: 'string' },
+            codigoInterno: { type: 'string' },
+            mensaje: { type: 'string' },
+            timestamp: { type: 'string', format: 'date-time' }
           }
         }
       }
     },
     security: [{ bearerAuth: [] }]
   },
-  apis: ['./src/routes/*.js']
+  apis: ['./src/routes/*.js'] 
 };
 
 module.exports = swaggerJsdoc(options);

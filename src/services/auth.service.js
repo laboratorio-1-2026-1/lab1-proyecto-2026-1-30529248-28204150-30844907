@@ -1,308 +1,336 @@
-// src/services/auth.service.js
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const prisma = require('../db/prisma');
-const { hashPassword } = require('../utils/hash');
-const { CODIGOS_ERROR, ESTADOS_GENERALES, TOKENS } = require('../config/constantes');
+const { ESTADOS_GENERALES, TOKENS, CODIGOS_ERROR } = require('../config/constantes');
 
 class AuthService {
-  /**
-   * Autenticar usuario y generar token JWT
-   */
   async login(email, password) {
-    // Buscar usuario por email incluyendo su rol
     const usuario = await prisma.usuario.findUnique({
       where: { email },
-      include: {
-        rol: true
-      }
+      include: { rol: true }
     });
 
     if (!usuario) {
-      throw {
-        status: 401,
-        code: CODIGOS_ERROR.CREDENCIALES_INVALIDAS,
-        message: 'Credenciales inválidas'
-      };
+      throw { status: 401, code: CODIGOS_ERROR.CREDENCIALES_INVALIDAS, message: 'Credenciales inválidas' };
     }
 
-    // Verificar estado del usuario
     if (usuario.estado !== ESTADOS_GENERALES.ACTIVO) {
-      throw {
-        status: 401,
-        code: CODIGOS_ERROR.CREDENCIALES_INVALIDAS,
-        message: 'Usuario inactivo'
-      };
+      throw { status: 401, code: CODIGOS_ERROR.CREDENCIALES_INVALIDAS, message: 'Usuario inactivo' };
     }
 
-    // Verificar contraseña
     const isValidPassword = await bcrypt.compare(password, usuario.password);
     if (!isValidPassword) {
-      throw {
-        status: 401,
-        code: CODIGOS_ERROR.CREDENCIALES_INVALIDAS,
-        message: 'Credenciales inválidas'
-      };
+      throw { status: 401, code: CODIGOS_ERROR.CREDENCIALES_INVALIDAS, message: 'Credenciales inválidas' };
     }
 
-    // Generar token JWT
     const token = jwt.sign(
       {
         id: usuario.id,
         email: usuario.email,
-        rolId: usuario.idRol,
+        idRol: usuario.idRol,
         rolNombre: usuario.rol.nombre
       },
       process.env.JWT_SECRET,
       { expiresIn: TOKENS.JWT_EXPIRES_IN }
     );
 
-    // Remover password del objeto de respuesta
     const { password: _, ...usuarioSinPassword } = usuario;
-
-    return {
-      token,
-      usuario: usuarioSinPassword
-    };
+    return { token, usuario: usuarioSinPassword };
   }
 
-  /**
-   * Registrar un nuevo usuario (solo ADMIN)
-   */
   async register(userData) {
-    const { email, password, idRol, descripcion } = userData;
+    console.log(' Iniciando registro de usuario:', userData.email);
+    
+    const { 
+      email, 
+      password, 
+      nombre, 
+      apellido, 
+      cedula,      
+      telefono,    
+      rolNombre,
+      descripcion,
+      especialidad
+    } = userData;
 
-    // Verificar si el email ya existe
-    const existingUser = await prisma.usuario.findUnique({
-      where: { email }
+    if (!email) throw { status: 400, message: 'Email es requerido' };
+    if (!password) throw { status: 400, message: 'Password es requerido' };
+    if (!rolNombre) throw { status: 400, message: 'rolNombre es requerido' };
+
+    const existingUser = await prisma.usuario.findUnique({ 
+      where: { email } 
     });
-
+    
     if (existingUser) {
-      throw {
-        status: 409,
-        code: CODIGOS_ERROR.DUPLICADO,
-        message: 'El email ya está registrado'
+      throw { 
+        status: 409, 
+        message: 'El email ya está registrado' 
       };
     }
 
-    // Verificar que el rol existe
-    const rol = await prisma.rol.findUnique({
-      where: { id: idRol }
+    const rol = await prisma.rol.findFirst({
+      where: { nombre: rolNombre.toUpperCase() }
     });
 
     if (!rol) {
-      throw {
-        status: 404,
-        code: CODIGOS_ERROR.NO_ENCONTRADO,
-        message: 'El rol especificado no existe'
+      throw { 
+        status: 404, 
+        message: `El rol "${rolNombre}" no existe. Roles disponibles: ADMIN, FINANZAS, ENTRENADOR, CLIENTE` 
       };
     }
 
-    // Hashear contraseña
-    const hashedPassword = await hashPassword(password);
+    console.log(' Rol encontrado:', rol.nombre);
 
-    // Crear usuario
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     const nuevoUsuario = await prisma.usuario.create({
       data: {
         email,
         password: hashedPassword,
-        idRol,
-        descripcion: descripcion || null,
-        estado: ESTADOS_GENERALES.ACTIVO
+        idRol: rol.id,
+        descripcion: descripcion || `Usuario con rol ${rol.nombre}`,
+        estado: 'ACTIVO'
       },
-      include: {
-        rol: true
-      }
+      include: { rol: true }
     });
 
-    const { password: _, ...usuarioSinPassword } = nuevoUsuario;
-    return usuarioSinPassword;
-  }
+    console.log(' Usuario creado, ID:', nuevoUsuario.id);
 
-  /**
-   * Obtener perfil del usuario autenticado
-   */
-  async getProfile(userId) {
-    const usuario = await prisma.usuario.findUnique({
-      where: { id: userId },
-      include: {
-        rol: true
+    if (rol.nombre === 'CLIENTE') {
+      if (!cedula) throw { status: 400, message: 'La cédula es requerida para clientes' };
+      if (!nombre) throw { status: 400, message: 'El nombre es requerido para clientes' };
+      if (!apellido) throw { status: 400, message: 'El apellido es requerido para clientes' };
+      
+      const existingCedula = await prisma.cliente.findUnique({
+        where: { cedula }
+      });
+      
+      if (existingCedula) {
+        throw { 
+          status: 409, 
+          message: 'La cédula ya está registrada' 
+        };
       }
-    });
 
-    if (!usuario) {
-      throw {
-        status: 404,
-        code: CODIGOS_ERROR.NO_ENCONTRADO,
-        message: 'Usuario no encontrado'
-      };
+      await prisma.cliente.create({
+        data: {
+          idUsuario: nuevoUsuario.id,
+          cedula: cedula,
+          nombre: nombre,
+          apellido: apellido,
+          telefono: telefono || null
+        }
+      });
+      console.log(' Registro de CLIENTE creado');
     }
 
-    const { password: _, ...usuarioSinPassword } = usuario;
+    else if (rol.nombre === 'ENTRENADOR') {
+      if (!especialidad) throw { status: 400, message: 'La especialidad es requerida para entrenadores' };
+      if (rol.nombre === 'ENTRENADOR') {
+      const especialidadFinal = especialidad && typeof especialidad === 'string' 
+        ? especialidad 
+        : null;
+        
+      await prisma.entrenador.create({
+        data: {
+          idUsuario: nuevoUsuario.id,
+          especialidad: especialidad || null
+        }
+      });
+      console.log(' Registro de ENTRENADOR creado');
+      }
+    }
+    
+    const { password: _, ...usuarioSinPassword } = nuevoUsuario;
+    
+    console.log(' Registro completado exitosamente');
     return usuarioSinPassword;
   }
 
-  /**
-   * Listar todos los usuarios (solo ADMIN)
-   */
   async getAllUsers(page = 1, limit = 10) {
     const skip = (page - 1) * limit;
-    const take = Math.min(limit, 50); // Máximo 50 por página
-
     const [usuarios, total] = await Promise.all([
       prisma.usuario.findMany({
         skip,
-        take,
-        include: {
-          rol: true
+        take: limit,
+        include: { 
+          rol: true,
+          cliente: true,
+          entrenador: true
         },
-        orderBy: {
-          id: 'desc'
-        }
+        orderBy: { id: 'desc' }
       }),
       prisma.usuario.count()
     ]);
 
-    // Remover passwords
-    const usuariosSinPassword = usuarios.map(({ password, ...rest }) => rest);
+    const usuariosFormateados = usuarios.map(({ password, ...rest }) => ({
+      ...rest,
+      rol: rest.rol.nombre,
+      tipoUsuario: rest.cliente ? 'CLIENTE' : (rest.entrenador ? 'ENTRENADOR' : 'USUARIO_SIN_ESPECIFICACION'),
+      datosEspecificos: rest.cliente || rest.entrenador || null
+    }));
 
     return {
-      data: usuariosSinPassword,
-      pagination: {
-        page,
-        limit: take,
-        total,
-        totalPages: Math.ceil(total / take)
-      }
+      data: usuariosFormateados,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
     };
   }
 
-  /**
-   * Obtener usuario por ID (solo ADMIN)
-   */
   async getUserById(userId) {
     const usuario = await prisma.usuario.findUnique({
-      where: { id: userId },
-      include: {
-        rol: true
+      where: { id: parseInt(userId) },
+      include: { 
+        rol: true,
+        cliente: true,
+        entrenador: true
       }
     });
 
     if (!usuario) {
-      throw {
-        status: 404,
-        code: CODIGOS_ERROR.NO_ENCONTRADO,
-        message: 'Usuario no encontrado'
-      };
+      throw { status: 404, code: CODIGOS_ERROR.NO_ENCONTRADO, message: 'Usuario no encontrado' };
     }
 
     const { password: _, ...usuarioSinPassword } = usuario;
-    return usuarioSinPassword;
+    
+    return {
+      ...usuarioSinPassword,
+      rol: usuarioSinPassword.rol.nombre,
+      tipoUsuario: usuario.cliente ? 'CLIENTE' : (usuario.entrenador ? 'ENTRENADOR' : 'USUARIO_SIN_ESPECIFICACION'),
+      datosEspecificos: usuario.cliente || usuario.entrenador || null
+    };
   }
 
-  /**
-   * Actualizar usuario (solo ADMIN)
-   */
   async updateUser(userId, updateData) {
-    const { email, idRol, descripcion, estado } = updateData;
+    console.log(' Actualizando usuario ID:', userId);
+    console.log('   Datos recibidos:', updateData);
+    
+    const { 
+      email, 
+      nombre, 
+      apellido, 
+      cedula, 
+      telefono, 
+      rolNombre, 
+      estado,       
+      descripcion, 
+      especialidad   
+    } = updateData;
 
-    // Verificar si el usuario existe
     const existingUser = await prisma.usuario.findUnique({
-      where: { id: userId }
+      where: { id: parseInt(userId) },
+      include: { rol: true, cliente: true, entrenador: true }
     });
 
     if (!existingUser) {
-      throw {
-        status: 404,
-        code: CODIGOS_ERROR.NO_ENCONTRADO,
-        message: 'Usuario no encontrado'
-      };
+      throw { status: 404, message: 'Usuario no encontrado' };
     }
 
-    // Si se actualiza email, verificar que no exista otro usuario con ese email
-    if (email && email !== existingUser.email) {
-      const emailExists = await prisma.usuario.findUnique({
-        where: { email }
-      });
-      if (emailExists) {
-        throw {
-          status: 409,
-          code: CODIGOS_ERROR.DUPLICADO,
-          message: 'El email ya está registrado'
-        };
-      }
-    }
-
-    // Si se actualiza rol, verificar que existe
-    if (idRol) {
-      const rol = await prisma.rol.findUnique({
-        where: { id: idRol }
+    const usuarioUpdateFields = {};
+    
+    if (email !== undefined) usuarioUpdateFields.email = email;
+    if (descripcion !== undefined) usuarioUpdateFields.descripcion = descripcion;
+    if (estado !== undefined) usuarioUpdateFields.estado = estado;
+    
+    if (rolNombre) {
+      const rol = await prisma.rol.findFirst({
+        where: { nombre: rolNombre.toUpperCase() }
       });
       if (!rol) {
-        throw {
-          status: 404,
-          code: CODIGOS_ERROR.NO_ENCONTRADO,
-          message: 'El rol especificado no existe'
-        };
+        throw { status: 404, message: `El rol "${rolNombre}" no existe` };
+      }
+      usuarioUpdateFields.idRol = rol.id;
+    }
+
+    let usuarioActualizado = existingUser;
+    if (Object.keys(usuarioUpdateFields).length > 0) {
+      usuarioActualizado = await prisma.usuario.update({
+        where: { id: parseInt(userId) },
+        data: usuarioUpdateFields,
+        include: { rol: true, cliente: true, entrenador: true }
+      });
+      console.log(' Usuario actualizado');
+    }
+
+    const tieneCliente = usuarioActualizado.cliente && usuarioActualizado.cliente.length > 0;
+    
+    if (tieneCliente) {
+      const clienteUpdateFields = {};
+      
+      if (nombre !== undefined) clienteUpdateFields.nombre = nombre;
+      if (apellido !== undefined) clienteUpdateFields.apellido = apellido;
+      if (cedula !== undefined) clienteUpdateFields.cedula = cedula;
+      if (telefono !== undefined) clienteUpdateFields.telefono = telefono;
+      
+      
+      if (Object.keys(clienteUpdateFields).length > 0) {
+        await prisma.cliente.update({
+          where: { id: usuarioActualizado.cliente[0].id },
+          data: clienteUpdateFields
+        });
+        console.log(' Datos de CLIENTE actualizados');
       }
     }
 
-    // Actualizar usuario
-    const usuarioActualizado = await prisma.usuario.update({
-      where: { id: userId },
-      data: {
-        email: email || undefined,
-        idRol: idRol || undefined,
-        descripcion: descripcion !== undefined ? descripcion : undefined,
-        estado: estado || undefined
-      },
-      include: {
-        rol: true
-      }
+    const tieneEntrenador = usuarioActualizado.entrenador && usuarioActualizado.entrenador.length > 0;
+    
+    if (tieneEntrenador && especialidad !== undefined) {
+      await prisma.entrenador.update({
+        where: { id: usuarioActualizado.entrenador[0].id },
+        data: { especialidad: especialidad }
+      });
+      console.log(' Datos de ENTRENADOR actualizados');
+    }
+
+    const usuarioFinal = await prisma.usuario.findUnique({
+      where: { id: parseInt(userId) },
+      include: { rol: true, cliente: true, entrenador: true }
     });
 
-    const { password: _, ...usuarioSinPassword } = usuarioActualizado;
-    return usuarioSinPassword;
+    const { password: _, ...usuarioSinPassword } = usuarioFinal;
+    
+    console.log(' Actualización completada');
+    
+    return {
+      ...usuarioSinPassword,
+      rol: usuarioSinPassword.rol.nombre
+    };
   }
 
-  /**
-   * Eliminar usuario (soft delete sugerido - solo ADMIN)
-   */
   async deleteUser(userId) {
-    const existingUser = await prisma.usuario.findUnique({
-      where: { id: userId }
-    });
-
+    const existingUser = await prisma.usuario.findUnique({ where: { id: parseInt(userId) } });
     if (!existingUser) {
-      throw {
-        status: 404,
-        code: CODIGOS_ERROR.NO_ENCONTRADO,
-        message: 'Usuario no encontrado'
-      };
+      throw { status: 404, code: CODIGOS_ERROR.NO_ENCONTRADO, message: 'Usuario no encontrado' };
     }
 
-    // Soft delete: cambiar estado a inactivo
     const usuarioEliminado = await prisma.usuario.update({
-      where: { id: userId },
-      data: {
-        estado: ESTADOS_GENERALES.INACTIVO
-      },
-      include: {
-        rol: true
-      }
+      where: { id: parseInt(userId) },
+      data: { estado: ESTADOS_GENERALES.INACTIVO },
+      include: { rol: true }
     });
 
     const { password: _, ...usuarioSinPassword } = usuarioEliminado;
     return usuarioSinPassword;
   }
 
-  /**
-   * Asignar rol a un usuario
-   */
-  async assignRole(userId, rolId) {
-    // Verificar si el usuario existe
+  async getProfile(userId) {
+    console.log(' getProfile service - userId:', userId);
+    
+    const id = parseInt(userId);
+    if (isNaN(id)) {
+      throw {
+        status: 400,
+        code: 'ID_INVALIDO',
+        message: 'ID de usuario inválido'
+      };
+    }
+
     const usuario = await prisma.usuario.findUnique({
-      where: { id: userId }
+      where: { id: id },
+      include: { 
+        rol: true,
+        cliente: true,
+        entrenador: true
+      }
     });
 
     if (!usuario) {
@@ -313,38 +341,17 @@ class AuthService {
       };
     }
 
-    // Verificar si el rol existe
-    const rol = await prisma.rol.findUnique({
-      where: { id: rolId }
-    });
+    console.log(' Usuario encontrado en getProfile');
 
-    if (!rol) {
-      throw {
-        status: 404,
-        code: CODIGOS_ERROR.NO_ENCONTRADO,
-        message: 'Rol no encontrado'
-      };
-    }
+    const { password: _, ...usuarioSinPassword } = usuario;
+    const tieneCliente = usuario.cliente && usuario.cliente.length > 0;
+    const tieneEntrenador = usuario.entrenador && usuario.entrenador.length > 0;
 
-    // Actualizar rol
-    const usuarioActualizado = await prisma.usuario.update({
-      where: { id: userId },
-      data: { idRol: rolId },
-      include: { rol: true }
-    });
-
-    const { password: _, ...usuarioSinPassword } = usuarioActualizado;
-    return usuarioSinPassword;
-  }
-
-  /**
-   * Listar todos los roles
-   */
-  async getAllRoles() {
-    const roles = await prisma.rol.findMany({
-      orderBy: { id: 'asc' }
-    });
-    return roles;
+    return {
+      ...usuarioSinPassword,
+      rol: usuarioSinPassword.rol?.nombre || 'Sin rol',
+      tipoUsuario: tieneCliente ? 'CLIENTE' : (tieneEntrenador ? 'ENTRENADOR' : 'USUARIO_SIN_ESPECIFICACION')
+    };
   }
 }
 

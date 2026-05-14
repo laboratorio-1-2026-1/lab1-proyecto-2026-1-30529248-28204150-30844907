@@ -14,10 +14,10 @@ const loginRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Limitador para registro (limitación más suave)
+// Limitador para registro 
 const registerRateLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hora
-  max: 5, // 5 registros por hora
+  windowMs: 60 * 60 * 1000,             // 1 hora
+  max: 5,                               // 5 registros por hora
   message: {
     error: 'Too Many Requests',
     mensaje: 'Demasiados registros desde esta IP. Por favor, intente más tarde.',

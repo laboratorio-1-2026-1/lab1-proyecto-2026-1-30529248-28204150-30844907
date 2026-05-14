@@ -1,8 +1,8 @@
-// src/middlewares/rbac.middleware.js
 const { HTTP_STATUS, CODIGOS_ERROR } = require('../config/constantes');
 
 // Mapeo de roles permitidos para cada recurso/módulo
 const rolePermissions = {
+
   // Módulo de Usuarios (solo Admin)
   usuarios: ['Administrador'],
   
@@ -63,7 +63,7 @@ const checkRole = (allowedRoles) => {
 /**
  * Middleware para verificar permiso específico por módulo y método
  * @param {string} module - Módulo al que se intenta acceder
- * @param {string} method - Método HTTP (opcional, por defecto usa req.method)
+ * @param {string} method - Método HTTP
  */
 const checkPermission = (module, method = null) => {
   return (req, res, next) => {
