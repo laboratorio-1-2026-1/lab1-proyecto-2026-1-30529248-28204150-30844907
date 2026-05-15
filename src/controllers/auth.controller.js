@@ -80,14 +80,20 @@ class AuthController {
   
   async getProfile(req, res, next) {
     try {
-      if (!req.user) {
-        console.log(`🔍 Buscando perfil para usuario ID: ${req.user.id}`);
+      const token = authMiddleware.verifyToken(req, res, next);
+      if (!token) {
+        console.log(`🔍 Buscando perfil para usuario ID: ${token.id}`);
         return res.status(401).json({
           success: false,
           message: 'No autenticado'
         });
       }
-      user = await authService.getUserById(req.user.id);
+      let user
+      if (token.id === undefined || token.id === null) {
+        user = await authService.getProfile(authService.user);
+      } else if (token.id !== undefined && token.id !== null) {
+        user = await authService.getProfile(token.id);
+      }
       return res.status(HTTP_STATUS.OK).json({
         success: true,
         data: {

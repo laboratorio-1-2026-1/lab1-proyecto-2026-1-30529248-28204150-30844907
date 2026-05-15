@@ -18,6 +18,10 @@ const errorHandler = require('./middlewares/errorHandler.middleware');
 // Importar controladores
 const authController = require('./controllers/auth.controller');
 const rolController = require('./controllers/rol.controller');
+const maquinaController = require('./controllers/maquina.controller');
+
+// Importar rutas
+const maquinaRoutes = require('./routes/maquina.routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -64,6 +68,8 @@ app.get('/api/v1/auth/me', (req, res, next) => {
   authController.getProfile(req, res, next);
 });
 
+// ==================== MÓDULO 1: GESTIÓN DE USUARIOS ====================
+
 // CRUD Usuarios (solo ADMIN)
 app.get('/api/v1/usuarios', verifyToken, checkRole(['ADMIN']), authController.getAllUsers);
 app.get('/api/v1/usuarios/:id', verifyToken, checkRole(['ADMIN']), authController.getUserById);
@@ -77,6 +83,9 @@ app.get('/api/v1/roles/:id', verifyToken, checkRole(['ADMIN']), rolController.ge
 app.post('/api/v1/roles', verifyToken, checkRole(['ADMIN']), rolController.createRol);
 app.put('/api/v1/roles/:id', verifyToken, checkRole(['ADMIN']), rolController.updateRol);
 app.delete('/api/v1/roles/:id', verifyToken, checkRole(['ADMIN']), rolController.deleteRol);
+
+// ==================== MÓDULO 2: INVENTARIO DE MÁQUINAS ====================
+app.use('/api/v1/maquinas', maquinaRoutes);
 
 // ==================== MANEJO DE ERRORES ====================
 app.use(errorHandler);

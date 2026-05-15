@@ -28,7 +28,7 @@ const options = {
         }
       },
       schemas: {
-        // Modelo Login
+        // ==================== LOGIN ====================
         LoginRequest: {
           type: 'object',
           required: ['email', 'password'],
@@ -59,7 +59,7 @@ const options = {
             }
           }
         },
-        // Modelo Usuario
+        // ==================== USUARIOS ====================
         UsuarioRequest: {
           type: 'object',
           required: ['email', 'password', 'nombre', 'apellido', 'cedula', 'rolNombre'],
@@ -97,7 +97,7 @@ const options = {
           }
         },
         
-        // Modelo Rol
+        // ==================== ROLES ====================
         RolRequest: {
           type: 'object',
           required: ['nombre'],
@@ -129,6 +129,103 @@ const options = {
             mensaje: { type: 'string' },
             timestamp: { type: 'string', format: 'date-time' }
           }
+        },
+
+        // ==================== MÁQUINAS ====================
+        MaquinaRequest: {
+        type: 'object',
+        required: ['codigo', 'nombre', 'idCategoria'],
+        properties: {
+            codigo: { type: 'integer', example: 1001, description: 'Código único de la máquina' },
+            nombre: { type: 'string', example: 'Cinta Correr T9000' },
+            idCategoria: { type: 'integer', example: 1, description: 'ID de la categoría' },
+            descripcion: { type: 'string', example: 'Cinta eléctrica con inclinación' },
+            estado: { type: 'string', enum: ['ACTIVA', 'MANTENIMIENTO', 'FUERA_SERVICIO'], example: 'ACTIVA' }
+        }
+        },
+
+        MaquinaResponse: {
+        type: 'object',
+        properties: {
+            success: { type: 'boolean', example: true },
+            message: { type: 'string' },
+            data: {
+            type: 'object',
+            properties: {
+                id: { type: 'integer' },
+                codigo: { type: 'integer' },
+                nombre: { type: 'string' },
+                descripcion: { type: 'string' },
+                estado: { type: 'string' },
+                idCategoria: { type: 'integer' },
+                categoria: {
+                type: 'object',
+                properties: {
+                    id: { type: 'integer' },
+                    nombre: { type: 'string' },
+                    descripcion: { type: 'string' }
+                }
+                }
+            }
+            }
+        }
+        },
+
+        MaquinaListResponse: {
+        type: 'object',
+        properties: {
+            success: { type: 'boolean', example: true },
+            data: {
+            type: 'object',
+            properties: {
+                data: { type: 'array', items: { $ref: '#/components/schemas/MaquinaResponse' } },
+                pagination: {
+                type: 'object',
+                properties: {
+                    page: { type: 'integer' },
+                    limit: { type: 'integer' },
+                    total: { type: 'integer' },
+                    totalPages: { type: 'integer' }
+                }
+                }
+            }
+            }
+        }
+        },
+
+        EstadoUpdateRequest: {
+        type: 'object',
+        required: ['estado'],
+        properties: {
+            estado: { type: 'string', enum: ['ACTIVA', 'MANTENIMIENTO', 'FUERA_SERVICIO'], example: 'MANTENIMIENTO' }
+        }
+        },
+
+        // ==================== CATEGORÍAS DE MÁQUINAS ====================
+        CategoriaRequest: {
+        type: 'object',
+        required: ['nombre'],
+        properties: {
+            nombre: { type: 'string', example: 'Cardiovascular' },
+            descripcion: { type: 'string', example: 'Máquinas para ejercicio cardiovascular' }
+        }
+        },
+
+        CategoriaResponse: {
+        type: 'object',
+        properties: {
+            success: { type: 'boolean', example: true },
+            message: { type: 'string' },
+            data: {
+            type: 'object',
+            properties: {
+                id: { type: 'integer' },
+                nombre: { type: 'string' },
+                descripcion: { type: 'string' },
+                maquinas: { type: 'array', items: { $ref: '#/components/schemas/MaquinaResponse' } }
+            }
+            }
+        }
         }
       }
     },

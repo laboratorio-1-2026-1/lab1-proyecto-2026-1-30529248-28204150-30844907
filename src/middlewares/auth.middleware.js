@@ -2,6 +2,8 @@ const jwt = require('jsonwebtoken');
 const { HTTP_STATUS, CODIGOS_ERROR } = require('../config/constantes');
 const { isBlacklisted } = require('../utils/tokenBlacklist');
 
+let decoded = null;
+
 const verifyToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
@@ -32,10 +34,10 @@ const verifyToken = async (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
     console.log(' Token decodificado:', decoded);
-    req.user = decoded;
     next();
+    return { decoded };
   } catch (error) {
     console.log(' Error verificando token:', error.message);
     let codigo = CODIGOS_ERROR.TOKEN_INVALIDO;
@@ -54,5 +56,4 @@ const verifyToken = async (req, res, next) => {
     });
   }
 };
-
 module.exports = { verifyToken };

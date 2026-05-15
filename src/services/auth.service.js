@@ -2,13 +2,20 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const prisma = require('../db/prisma');
 const { ESTADOS_GENERALES, TOKENS, CODIGOS_ERROR } = require('../config/constantes');
+const { use } = require('react');
 
 class AuthService {
+  constructor() {
+    this.user = null;
+  }
   async login(email, password) {
     const usuario = await prisma.usuario.findUnique({
       where: { email },
       include: { rol: true }
     });
+
+    this.user = usuario.id;
+
 
     if (!usuario) {
       throw { status: 401, code: CODIGOS_ERROR.CREDENCIALES_INVALIDAS, message: 'Credenciales inválidas' };
@@ -314,6 +321,13 @@ class AuthService {
 
   async getProfile(userId) {
     console.log(' getProfile service - userId:', userId);
+
+    if (!userId) {
+      throw { status: 400, message: 'ID de usuario inválido' };
+    } 
+    if (userId == null || userId === undefined || isNaN(parseInt(userId))) {
+      userId = this.user;
+    }
     
     const id = parseInt(userId);
     if (isNaN(id)) {
