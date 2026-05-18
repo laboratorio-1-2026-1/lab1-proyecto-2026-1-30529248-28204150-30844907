@@ -54,7 +54,8 @@ class AuthController {
 
   async updateUser(req, res, next) {
     try {
-      const updatedUser = await authService.updateUser(req.params.id, req.body);
+      const requesterId = req.user?.id;
+      const updatedUser = await authService.updateUser(req.params.id, req.body, requesterId);
       res.status(HTTP_STATUS.OK).json({ 
         success: true, 
         message: 'Usuario actualizado exitosamente', 
@@ -67,12 +68,23 @@ class AuthController {
 
   async deleteUser(req, res, next) {
     try {
-      const deletedUser = await authService.deleteUser(req.params.id);
+      const requesterId = req.user?.id;
+      const deletedUser = await authService.deleteUser(req.params.id, requesterId);
       res.status(HTTP_STATUS.OK).json({ 
         success: true, 
         message: 'Usuario eliminado exitosamente', 
         data: deletedUser 
       });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async reactivateUser(req, res, next) {
+    try {
+      const requesterId = req.user?.id;
+      const reactivated = await authService.reactivateUser(req.params.id, requesterId);
+      res.status(HTTP_STATUS.OK).json({ success: true, message: 'Usuario reactivado exitosamente', data: reactivated });
     } catch (error) {
       next(error);
     }
