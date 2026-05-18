@@ -1,6 +1,7 @@
+const dotenv = require('dotenv');
+dotenv.config();
 const prisma = require('./prisma');
 const bcrypt = require('bcryptjs');
-const dotenv = require('dotenv');
 
 async function seed() {
   console.log('🌱 Iniciando seeding...');

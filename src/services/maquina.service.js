@@ -236,9 +236,18 @@ class MaquinaService {
   // ==================== CATEGORÍAS ====================
   
   async getAllCategorias() {
-    return await prisma.categoriaDeMaquina.findMany({
-      orderBy: { id: 'asc' }
-    });
+    try {
+      return await prisma.categoriaDeMaquina.findMany({
+        orderBy: { id: 'asc' }
+      });
+    } catch (err) {
+      console.error('Error en MaquinaService.getAllCategorias:', err);
+      throw {
+        status: 500,
+        code: CODIGOS_ERROR.DATOS_INVALIDOS,
+        message: err.message || 'Error obteniendo categorías'
+      };
+    }
   }
   
   async getCategoriaById(id) {

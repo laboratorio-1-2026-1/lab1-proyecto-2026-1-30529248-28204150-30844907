@@ -51,7 +51,7 @@ const registerValidations = [
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/login', validate(loginValidations), authController.login);
+router.post('/auth/login', validate(loginValidations), authController.login);
 
 /**
  * @swagger
@@ -72,7 +72,7 @@ router.post('/login', validate(loginValidations), authController.login);
  *       401:
  *         description: No autorizado
  */
-router.get('/me', verifyToken, authController.getProfile);
+router.get('/auth/me', verifyToken, authController.getProfile);
 
 // ==================== CRUD USUARIOS ====================
 

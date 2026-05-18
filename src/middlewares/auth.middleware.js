@@ -2,8 +2,6 @@ const jwt = require('jsonwebtoken');
 const { HTTP_STATUS, CODIGOS_ERROR } = require('../config/constantes');
 const { isBlacklisted } = require('../utils/tokenBlacklist');
 
-let decoded = null;
-
 const verifyToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
@@ -34,10 +32,10 @@ const verifyToken = async (req, res, next) => {
   }
 
   try {
-    decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     console.log(' Token decodificado:', decoded);
-    next();
-    return { decoded };
+    req.user = decoded;
+    return next();
   } catch (error) {
     console.log(' Error verificando token:', error.message);
     let codigo = CODIGOS_ERROR.TOKEN_INVALIDO;
