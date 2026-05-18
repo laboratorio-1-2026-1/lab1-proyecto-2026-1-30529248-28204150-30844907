@@ -221,6 +221,29 @@ router.put('/usuarios/:id', verifyToken, checkRole(['ADMIN']), authController.up
  */
 router.delete('/usuarios/:id', verifyToken, checkRole(['ADMIN']), authController.deleteUser);
 
+/**
+ * @swagger
+ * /api/v1/usuarios/{id}/reactivar:
+ *   patch:
+ *     summary: Reactivar usuario (solo ADMIN)
+ *     tags: [Usuarios]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Usuario reactivado
+ *       404:
+ *         description: Usuario no encontrado
+ *       403:
+ *         description: No autorizado
+ */
+router.patch('/usuarios/:id/reactivar', verifyToken, checkRole(['ADMIN']), authController.reactivateUser);
+
 // ==================== CRUD ROLES ====================
 
 /**
