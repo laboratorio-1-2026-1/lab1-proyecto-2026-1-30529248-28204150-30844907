@@ -207,7 +207,7 @@ class AuthService {
     };
   }
 
-  async updateUser(userId, updateData) {
+  async updateUser(userId, updateData, requesterId) {
     console.log(' Actualizando usuario ID:', userId);
     console.log('   Datos recibidos:', updateData);
     
@@ -245,6 +245,11 @@ class AuthService {
       if (!rol) {
         throw { status: 404, message: `El rol "${rolNombre}" no existe` };
       }
+      // No permitir modificar el rol de otro ADMIN
+      if (existingUser.rol && existingUser.rol.nombre === 'ADMIN' && parseInt(requesterId) !== parseInt(userId)) {
+        throw { status: 403, code: CODIGOS_ERROR.PERMISO_DENEGADO, message: 'No se puede modificar el rol de otro ADMIN' };
+      }
+
       usuarioUpdateFields.idRol = rol.id;
     }
 
@@ -303,10 +308,20 @@ class AuthService {
     };
   }
 
-  async deleteUser(userId) {
-    const existingUser = await prisma.usuario.findUnique({ where: { id: parseInt(userId) } });
+  async deleteUser(userId, requesterId) {
+    const existingUser = await prisma.usuario.findUnique({ where: { id: parseInt(userId) }, include: { rol: true } });
     if (!existingUser) {
       throw { status: 404, code: CODIGOS_ERROR.NO_ENCONTRADO, message: 'Usuario no encontrado' };
+    }
+
+    // No puede eliminarse a sí mismo
+    if (parseInt(userId) === parseInt(requesterId)) {
+      throw { status: 400, code: CODIGOS_ERROR.PERMISO_DENEGADO, message: 'Un usuario no puede eliminarse a sí mismo' };
+    }
+
+    // No puede eliminar a otro ADMIN
+    if (existingUser.rol && existingUser.rol.nombre === 'ADMIN' && parseInt(requesterId) !== parseInt(userId)) {
+      throw { status: 403, code: CODIGOS_ERROR.PERMISO_DENEGADO, message: 'No se puede eliminar a otro usuario con rol ADMIN' };
     }
 
     const usuarioEliminado = await prisma.usuario.update({
@@ -317,6 +332,35 @@ class AuthService {
 
     const { password: _, ...usuarioSinPassword } = usuarioEliminado;
     return usuarioSinPassword;
+  }
+
+  async reactivateUser(userId, requesterId) {
+    const requester = await prisma.usuario.findUnique({ where: { id: parseInt(requesterId) }, include: { rol: true } });
+    if (!requester) {
+      throw { status: 401, code: CODIGOS_ERROR.TOKEN_NO_PROVIDO, message: 'Solicitante no válido' };
+    }
+    if (!requester.rol || requester.rol.nombre !== 'ADMIN') {
+      throw { status: 403, code: CODIGOS_ERROR.PERMISO_DENEGADO, message: 'Solo ADMIN puede reactivar usuarios' };
+    }
+
+    const existingUser = await prisma.usuario.findUnique({ where: { id: parseInt(userId) }, include: { rol: true } });
+    if (!existingUser) {
+      throw { status: 404, code: CODIGOS_ERROR.NO_ENCONTRADO, message: 'Usuario no encontrado' };
+    }
+
+    if (existingUser.estado === ESTADOS_GENERALES.ACTIVO) {
+      const { password: _, ...usuarioSinPassword } = existingUser;
+      return { ...usuarioSinPassword, rol: existingUser.rol?.nombre };
+    }
+
+    const usuarioReactivado = await prisma.usuario.update({
+      where: { id: parseInt(userId) },
+      data: { estado: ESTADOS_GENERALES.ACTIVO },
+      include: { rol: true, cliente: true, entrenador: true }
+    });
+
+    const { password: _, ...usuarioSinPassword } = usuarioReactivado;
+    return { ...usuarioSinPassword, rol: usuarioReactivado.rol?.nombre };
   }
 
   async getProfile(userId) {
