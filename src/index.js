@@ -18,10 +18,12 @@ const errorHandler = require('./middlewares/errorHandler.middleware');
 // Importar controladores
 const authController = require('./controllers/auth.controller');
 const rolController = require('./controllers/rol.controller');
-const maquinaController = require('./controllers/maquina.controller');
 
 // Importar rutas
 const maquinaRoutes = require('./routes/maquina.routes');
+const suscripcionRoutes = require('./routes/suscripcion.routes');
+const deportivoRoutes = require('./routes/deportivo.routes');
+const reservaRoutes = require('./routes/reserva.routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -86,6 +88,23 @@ app.delete('/api/v1/roles/:id', verifyToken, checkRole(['ADMIN']), rolController
 
 // ==================== MÓDULO 2: INVENTARIO DE MÁQUINAS ====================
 app.use('/api/v1/maquinas', maquinaRoutes);
+
+// ==================== MÓDULO 3: PLANES DE SUSCRIPCIÓN Y PAGOS ====================
+
+app.use('/api/v1/suscripciones', suscripcionRoutes);
+
+// ==================== MÓDULO 4: GESTIÓN DE CLASES Y RESERVAS ====================
+
+
+app.use('/api/v1/clases', claseRoutes);
+
+// ==================== MÓDULO 5: GESTIÓN DEPORTIVA ====================
+
+app.use('/api/v1/deportivo', deportivoRoutes);
+
+// ==================== MÓDULO 6: GESTIÓN DE RESERVAS ====================
+
+app.use('/api/v1/reservas', reservaRoutes);
 
 // ==================== MANEJO DE ERRORES ====================
 app.use(errorHandler);

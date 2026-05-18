@@ -212,20 +212,272 @@ const options = {
         },
 
         CategoriaResponse: {
-        type: 'object',
-        properties: {
+          type: 'object',
+          properties: {
+              success: { type: 'boolean', example: true },
+              message: { type: 'string' },
+              data: {
+                type: 'object',
+                properties: {
+                    id: { type: 'integer' },
+                    nombre: { type: 'string' },
+                    descripcion: { type: 'string' },
+                    maquinas: { type: 'array', items: { $ref: '#/components/schemas/MaquinaResponse' } }
+                }
+              }
+          }
+        },
+        // ==================== PLANES DE SUSCRIPCIÓN ====================
+        PlanSuscripcionRequest: {
+          type: 'object',
+          required: ['nombre', 'costo', 'diasDuracion'],
+          properties: {
+            nombre: { type: 'string', example: 'Mensualidad Básica' },
+            descripcion: { type: 'string', example: 'Acceso a todas las áreas del gimnasio' },
+            costo: { type: 'number', example: 35.00 },
+            diasDuracion: { type: 'integer', example: 30 }
+          }
+        },
+
+        PlanSuscripcionResponse: {
+          type: 'object',
+          properties: {
             success: { type: 'boolean', example: true },
             message: { type: 'string' },
             data: {
-            type: 'object',
-            properties: {
+              type: 'object',
+              properties: {
                 id: { type: 'integer' },
                 nombre: { type: 'string' },
                 descripcion: { type: 'string' },
-                maquinas: { type: 'array', items: { $ref: '#/components/schemas/MaquinaResponse' } }
+                costo: { type: 'number' },
+                diasDuracion: { type: 'integer' }
+              }
             }
+          }
+        },
+
+        // ==================== MEMBRESÍAS ====================
+        MembresiaResponse: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer' },
+            idCliente: { type: 'integer' },
+            idSuscripcion: { type: 'integer' },
+            fechaInicio: { type: 'string', format: 'date' },
+            fechaFin: { type: 'string', format: 'date' },
+            estado: { type: 'string', enum: ['ACTIVA', 'VENCIDA', 'POR_VENCER'] },
+            suscripcion: { $ref: '#/components/schemas/PlanSuscripcionResponse' },
+            estadoActual: { type: 'string', enum: ['ACTIVA', 'VENCIDA', 'POR_VENCER'] },
+            diasRestantes: { type: 'integer' }
+          }
+        },
+
+        // ==================== PAGOS ====================
+        PagoRequest: {
+          type: 'object',
+          required: ['idMembresia', 'monto', 'metodoPago'],
+          properties: {
+            idMembresia: { type: 'integer', example: 1 },
+            monto: { type: 'number', example: 35.00 },
+            metodoPago: { type: 'string', enum: ['EFECTIVO', 'TRANSFERENCIA', 'TARJETA_CREDITO', 'TARJETA_DEBITO'], example: 'TRANSFERENCIA' }
+          }
+        },
+
+        PagoResponse: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer' },
+            idMembresia: { type: 'integer' },
+            monto: { type: 'number' },
+            fechaPago: { type: 'string', format: 'date-time' },
+            metodoPago: { type: 'string' },
+            membresia: { $ref: '#/components/schemas/MembresiaResponse' }
+          }
+        },
+
+        VerificarAccesoResponse: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            data: {
+              type: 'object',
+              properties: {
+                activa: { type: 'boolean' },
+                motivo: { type: 'string' },
+                diasRestantes: { type: 'integer' },
+                membresia: { $ref: '#/components/schemas/MembresiaResponse' }
+              }
             }
-        }
+          }
+        },
+        
+        // ==================== DISCIPLINAS ====================
+        DisciplinaRequest: {
+          type: 'object',
+          required: ['nombre'],
+          properties: {
+            nombre: { type: 'string', example: 'Spinning' },
+            descripcion: { type: 'string', example: 'Ciclismo indoor' }
+          }
+        },
+
+        DisciplinaResponse: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer' },
+            nombre: { type: 'string' },
+            descripcion: { type: 'string' }
+          }
+        },
+
+        // ==================== SESIONES ====================
+        SesionRequest: {
+          type: 'object',
+          required: ['idDisciplina', 'idEntrenador', 'fecha', 'horaInicio', 'horaFin'],
+          properties: {
+            idDisciplina: { type: 'integer', example: 1 },
+            idEntrenador: { type: 'integer', example: 1 },
+            fecha: { type: 'string', format: 'date', example: '2024-12-20' },
+            horaInicio: { type: 'string', example: '10:00' },
+            horaFin: { type: 'string', example: '11:00' },
+            limiteDeCupos: { type: 'integer', example: 20 }
+          }
+        },
+
+        SesionResponse: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer' },
+            idDisciplina: { type: 'integer' },
+            idEntrenador: { type: 'integer' },
+            fecha: { type: 'string', format: 'date' },
+            horaInicio: { type: 'string' },
+            horaFin: { type: 'string' },
+            limiteDeCupos: { type: 'integer' },
+            estado: { type: 'string' },
+            cuposOcupados: { type: 'integer' },
+            cuposDisponibles: { type: 'integer' },
+            disciplina: { $ref: '#/components/schemas/DisciplinaResponse' }
+          }
+        },
+
+        // ==================== RESERVAS ====================
+        ReservaRequest: {
+          type: 'object',
+          required: ['clienteId', 'sesionId'],
+          properties: {
+            clienteId: { type: 'integer', example: 1 },
+            sesionId: { type: 'integer', example: 1 }
+          }
+        },
+
+        ReservaResponse: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer' },
+            idCliente: { type: 'integer' },
+            idSesion: { type: 'integer' },
+            fecha: { type: 'string', format: 'date-time' },
+            estado: { type: 'string' },
+            sesion: { $ref: '#/components/schemas/SesionResponse' }
+          }
+        },
+        
+        // ==================== GESTIÓN DEPORTIVA ====================
+        DisciplinaResponse: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer' },
+            nombre: { type: 'string' },
+            descripcion: { type: 'string' }
+          }
+        },
+
+        EntrenadorResponse: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer' },
+            idUsuario: { type: 'integer' },
+            especialidad: { type: 'string' },
+            usuario: {
+              type: 'object',
+              properties: {
+                id: { type: 'integer' },
+                email: { type: 'string' },
+                nombre: { type: 'string' },
+                apellido: { type: 'string' }
+              }
+            }
+          }
+        },
+
+        SesionRequest: {
+          type: 'object',
+          required: ['idDisciplina', 'idEntrenador', 'fecha', 'horaInicio', 'horaFin'],
+          properties: {
+            idDisciplina: { type: 'integer', example: 1 },
+            idEntrenador: { type: 'integer', example: 1 },
+            fecha: { type: 'string', format: 'date', example: '2024-12-20' },
+            horaInicio: { type: 'string', example: '10:00' },
+            horaFin: { type: 'string', example: '11:00' },
+            limiteDeCupos: { type: 'integer', example: 20 }
+          }
+        },
+
+        SesionResponse: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer' },
+            idDisciplina: { type: 'integer' },
+            idEntrenador: { type: 'integer' },
+            fecha: { type: 'string', format: 'date' },
+            horaInicio: { type: 'string' },
+            horaFin: { type: 'string' },
+            limiteDeCupos: { type: 'integer' },
+            estado: { type: 'string' },
+            disciplina: { $ref: '#/components/schemas/DisciplinaResponse' },
+            entrenador: { $ref: '#/components/schemas/EntrenadorResponse' }
+          }
+        },
+
+        // ==================== RESERVAS ====================
+        ReservaRequest: {
+          type: 'object',
+          required: ['sesionId'],
+          properties: {
+            sesionId: { type: 'integer', example: 1 }
+          }
+        },
+
+        ReservaResponse: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer' },
+            idCliente: { type: 'integer' },
+            idSesion: { type: 'integer' },
+            fecha: { type: 'string', format: 'date-time' },
+            estado: { type: 'string' },
+            sesion: { $ref: '#/components/schemas/SesionResponse' }
+          }
+        },
+
+        SesionDisponibleResponse: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer' },
+            idDisciplina: { type: 'integer' },
+            idEntrenador: { type: 'integer' },
+            fecha: { type: 'string', format: 'date' },
+            horaInicio: { type: 'string' },
+            horaFin: { type: 'string' },
+            limiteDeCupos: { type: 'integer' },
+            cuposOcupados: { type: 'integer' },
+            cuposDisponibles: { type: 'integer' },
+            hayCupos: { type: 'boolean' },
+            disciplina: { $ref: '#/components/schemas/DisciplinaResponse' },
+            entrenador: { $ref: '#/components/schemas/EntrenadorResponse' }
+          }
         }
       }
     },
