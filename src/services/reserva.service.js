@@ -17,7 +17,7 @@ class ReservaService {
       prisma.sesion.findMany({
         skip, take: limit, where,
         include: { disciplina: true, entrenador: { include: { usuario: true } }, reservas: { where: { estado: 'ACTIVA' } } },
-        orderBy: { fecha: 'asc', horaInicio: 'asc' }
+        orderBy: [{ fecha: 'asc' }, { horaInicio: 'asc' }]
       }),
       prisma.sesion.count({ where })
     ]);
@@ -87,12 +87,15 @@ class ReservaService {
   
   async getReservasByCliente(clienteId, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
+    // Verificar que el cliente exista
+    const cliente = await prisma.cliente.findUnique({ where: { id: parseInt(clienteId) } });
+    if (!cliente) throw { status: 404, message: 'Cliente no encontrado' };
     const [reservas, total] = await Promise.all([
       prisma.reserva.findMany({
         where: { idCliente: parseInt(clienteId), estado: 'ACTIVA' },
         skip, take: limit,
         include: { sesion: { include: { disciplina: true, entrenador: { include: { usuario: true } } } } },
-        orderBy: { sesion: { fecha: 'asc', horaInicio: 'asc' } }
+        orderBy: [{ sesion: { fecha: 'asc' } }, { sesion: { horaInicio: 'asc' } }]
       }),
       prisma.reserva.count({ where: { idCliente: parseInt(clienteId), estado: 'ACTIVA' } })
     ]);
@@ -115,12 +118,15 @@ class ReservaService {
   
   async getHistorialReservasByCliente(clienteId, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
+    // Verificar que el cliente exista
+    const cliente = await prisma.cliente.findUnique({ where: { id: parseInt(clienteId) } });
+    if (!cliente) throw { status: 404, message: 'Cliente no encontrado' };
     const [reservas, total] = await Promise.all([
       prisma.reserva.findMany({
         where: { idCliente: parseInt(clienteId) },
         skip, take: limit,
         include: { sesion: { include: { disciplina: true, entrenador: { include: { usuario: true } } } } },
-        orderBy: { sesion: { fecha: 'desc' } }
+        orderBy: [{ sesion: { fecha: 'desc' } }]
       }),
       prisma.reserva.count({ where: { idCliente: parseInt(clienteId) } })
     ]);

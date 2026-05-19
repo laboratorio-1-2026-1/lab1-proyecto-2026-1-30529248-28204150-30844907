@@ -8,7 +8,7 @@ const { checkRole } = require('../middlewares/rbac.middleware');
 
 /**
  * @swagger
- * /deportivo/disciplinas:
+ * /api/v1/deportivo/disciplinas:
  *   get:
  *     summary: Listar todas las disciplinas
  *     tags: [Gestión Deportiva - Disciplinas]
@@ -47,7 +47,7 @@ router.get('/disciplinas', verifyToken, deportivoController.getAllDisciplinas);
 
 /**
  * @swagger
- * /deportivo/disciplinas/{id}:
+ * /api/v1/deportivo/disciplinas/{id}:
  *   get:
  *     summary: Obtener disciplina por ID
  *     tags: [Gestión Deportiva - Disciplinas]
@@ -68,7 +68,7 @@ router.get('/disciplinas/:id', verifyToken, deportivoController.getDisciplinaByI
 
 /**
  * @swagger
- * /deportivo/disciplinas:
+ * /api/v1/deportivo/disciplinas:
  *   post:
  *     summary: Crear nueva disciplina
  *     tags: [Gestión Deportiva - Disciplinas]
@@ -95,7 +95,7 @@ router.post('/disciplinas', verifyToken, checkRole(['ADMIN']), deportivoControll
 
 /**
  * @swagger
- * /deportivo/disciplinas/{id}:
+ * /api/v1/deportivo/disciplinas/{id}:
  *   put:
  *     summary: Actualizar disciplina
  *     tags: [Gestión Deportiva - Disciplinas]
@@ -124,7 +124,7 @@ router.put('/disciplinas/:id', verifyToken, checkRole(['ADMIN']), deportivoContr
 
 /**
  * @swagger
- * /deportivo/disciplinas/{id}:
+ * /api/v1/deportivo/disciplinas/{id}:
  *   delete:
  *     summary: Eliminar disciplina
  *     tags: [Gestión Deportiva - Disciplinas]
@@ -149,7 +149,7 @@ router.delete('/disciplinas/:id', verifyToken, checkRole(['ADMIN']), deportivoCo
 
 /**
  * @swagger
- * /deportivo/entrenadores:
+ * /api/v1/deportivo/entrenadores:
  *   get:
  *     summary: Listar todos los entrenadores
  *     tags: [Gestión Deportiva - Entrenadores]
@@ -170,7 +170,7 @@ router.get('/entrenadores', verifyToken, deportivoController.getAllEntrenadores)
 
 /**
  * @swagger
- * /deportivo/entrenadores/{id}:
+ * /api/v1/deportivo/entrenadores/{id}:
  *   get:
  *     summary: Obtener entrenador por ID
  *     tags: [Gestión Deportiva - Entrenadores]
@@ -191,7 +191,7 @@ router.get('/entrenadores/:id', verifyToken, deportivoController.getEntrenadorBy
 
 /**
  * @swagger
- * /deportivo/entrenadores:
+ * /api/v1/deportivo/entrenadores:
  *   post:
  *     summary: Registrar un usuario como entrenador
  *     tags: [Gestión Deportiva - Entrenadores]
@@ -220,7 +220,7 @@ router.post('/entrenadores', verifyToken, checkRole(['ADMIN']), deportivoControl
 
 /**
  * @swagger
- * /deportivo/entrenadores/{id}:
+ * /api/v1/deportivo/entrenadores/{id}:
  *   put:
  *     summary: Actualizar entrenador
  *     tags: [Gestión Deportiva - Entrenadores]
@@ -248,7 +248,7 @@ router.put('/entrenadores/:id', verifyToken, checkRole(['ADMIN']), deportivoCont
 
 /**
  * @swagger
- * /deportivo/entrenadores/{id}:
+ * /api/v1/deportivo/entrenadores/{id}:
  *   delete:
  *     summary: Eliminar entrenador
  *     tags: [Gestión Deportiva - Entrenadores]
@@ -273,7 +273,7 @@ router.delete('/entrenadores/:id', verifyToken, checkRole(['ADMIN']), deportivoC
 
 /**
  * @swagger
- * /deportivo/sesiones:
+ * /api/v1/deportivo/sesiones:
  *   get:
  *     summary: Listar todas las sesiones de clase
  *     tags: [Gestión Deportiva - Sesiones]
@@ -310,7 +310,7 @@ router.get('/sesiones', verifyToken, deportivoController.getAllSesiones);
 
 /**
  * @swagger
- * /deportivo/sesiones/{id}:
+ * /api/v1/deportivo/sesiones/{id}:
  *   get:
  *     summary: Obtener sesión por ID
  *     tags: [Gestión Deportiva - Sesiones]
@@ -331,7 +331,7 @@ router.get('/sesiones/:id', verifyToken, deportivoController.getSesionById);
 
 /**
  * @swagger
- * /deportivo/sesiones:
+ * /api/v1/deportivo/sesiones:
  *   post:
  *     summary: Crear nueva sesión de clase
  *     tags: [Gestión Deportiva - Sesiones]
@@ -368,7 +368,7 @@ router.post('/sesiones', verifyToken, checkRole(['ADMIN']), deportivoController.
 
 /**
  * @swagger
- * /deportivo/sesiones/{id}:
+ * /api/v1/deportivo/sesiones/{id}:
  *   put:
  *     summary: Actualizar sesión
  *     tags: [Gestión Deportiva - Sesiones]
@@ -402,7 +402,7 @@ router.put('/sesiones/:id', verifyToken, checkRole(['ADMIN']), deportivoControll
 
 /**
  * @swagger
- * /deportivo/sesiones/{id}/estado:
+ * /api/v1/deportivo/sesiones/{id}/estado:
  *   patch:
  *     summary: Cambiar estado de una sesión
  *     tags: [Gestión Deportiva - Sesiones]
@@ -433,7 +433,7 @@ router.patch('/sesiones/:id/estado', verifyToken, checkRole(['ADMIN']), deportiv
 
 /**
  * @swagger
- * /deportivo/sesiones/{id}:
+ * /api/v1/deportivo/sesiones/{id}:
  *   delete:
  *     summary: Eliminar sesión
  *     tags: [Gestión Deportiva - Sesiones]

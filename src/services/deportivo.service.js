@@ -51,7 +51,7 @@ class DeportivoService {
     const [entrenadores, total] = await Promise.all([
       prisma.entrenador.findMany({
         skip, take: limit,
-        include: { usuario: { select: { id: true, email: true, nombre: true, apellido: true, estado: true } } },
+        include: { usuario: { select: { id: true, email: true, estado: true, descripcion: true, idRol: true } } },
         orderBy: { id: 'asc' }
       }),
       prisma.entrenador.count()
@@ -62,7 +62,7 @@ class DeportivoService {
   async getEntrenadorById(id) {
     const entrenador = await prisma.entrenador.findUnique({
       where: { id: parseInt(id) },
-      include: { usuario: { select: { id: true, email: true, nombre: true, apellido: true, estado: true } }, sesiones: { include: { disciplina: true } } }
+      include: { usuario: { select: { id: true, email: true, estado: true, descripcion: true, idRol: true } }, sesiones: { include: { disciplina: true } } }
     });
     if (!entrenador) throw { status: 404, message: 'Entrenador no encontrado' };
     return entrenador;
@@ -78,7 +78,7 @@ class DeportivoService {
     const rol = await prisma.rol.findUnique({ where: { id: usuario.idRol } });
     if (rol.nombre !== 'ENTRENADOR') throw { status: 400, message: `El usuario no tiene rol ENTRENADOR. Rol actual: ${rol.nombre}` };
     
-    const existing = await prisma.entrenador.findUnique({ where: { idUsuario: parseInt(idUsuario) } });
+    const existing = await prisma.entrenador.findFirst({ where: { idUsuario: parseInt(idUsuario) } });
     if (existing) throw { status: 409, message: 'Este usuario ya está registrado como entrenador' };
     
     return await prisma.entrenador.create({ data: { idUsuario: parseInt(idUsuario), especialidad: especialidad || null }, include: { usuario: true } });
@@ -105,8 +105,16 @@ class DeportivoService {
   async getAllSesiones(filtros = {}, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
     const where = {};
-    if (filtros.disciplinaId) where.idDisciplina = parseInt(filtros.disciplinaId);
-    if (filtros.entrenadorId) where.idEntrenador = parseInt(filtros.entrenadorId);
+    if (filtros.disciplinaId) {
+      const disc = await prisma.disciplina.findUnique({ where: { id: parseInt(filtros.disciplinaId) } });
+      if (!disc) throw { status: 404, code: CODIGOS_ERROR.NO_ENCONTRADO, message: 'Disciplina no encontrada' };
+      where.idDisciplina = parseInt(filtros.disciplinaId);
+    }
+    if (filtros.entrenadorId) {
+      const ent = await prisma.entrenador.findUnique({ where: { id: parseInt(filtros.entrenadorId) } });
+      if (!ent) throw { status: 404, code: CODIGOS_ERROR.NO_ENCONTRADO, message: 'Entrenador no encontrado' };
+      where.idEntrenador = parseInt(filtros.entrenadorId);
+    }
     if (filtros.estado) where.estado = filtros.estado;
     if (filtros.fecha) {
       const fecha = new Date(filtros.fecha);
@@ -116,18 +124,23 @@ class DeportivoService {
     const [sesiones, total] = await Promise.all([
       prisma.sesion.findMany({
         skip, take: limit, where,
-        include: { disciplina: true, entrenador: { include: { usuario: { select: { id: true, nombre: true, apellido: true, email: true } } } } },
-        orderBy: { fecha: 'asc', horaInicio: 'asc' }
+        include: { disciplina: true, entrenador: { include: { usuario: { select: { id: true, email: true, estado: true, descripcion: true, idRol: true } } } } },
+        orderBy: [{ fecha: 'asc' }, { horaInicio: 'asc' }]
       }),
       prisma.sesion.count({ where })
     ]);
+
+    // Si se filtró por fecha y no hay sesiones, devolver 404 para indicar que no se encontró
+    if (filtros.fecha && total === 0) {
+      throw { status: 404, code: CODIGOS_ERROR.NO_ENCONTRADO, message: 'No se encontraron sesiones para la fecha indicada' };
+    }
     return { data: sesiones, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
   
   async getSesionById(id) {
     const sesion = await prisma.sesion.findUnique({
       where: { id: parseInt(id) },
-      include: { disciplina: true, entrenador: { include: { usuario: { select: { id: true, nombre: true, apellido: true, email: true } } } } }
+      include: { disciplina: true, entrenador: { include: { usuario: { select: { id: true, email: true, estado: true, descripcion: true, idRol: true } } } } }
     });
     if (!sesion) throw { status: 404, message: 'Sesión no encontrada' };
     return sesion;

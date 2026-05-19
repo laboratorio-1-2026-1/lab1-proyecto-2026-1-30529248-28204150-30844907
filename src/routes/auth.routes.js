@@ -51,7 +51,7 @@ const registerValidations = [
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/login', validate(loginValidations), authController.login);
+router.post('/auth/login', validate(loginValidations), authController.login);
 
 /**
  * @swagger
@@ -72,7 +72,7 @@ router.post('/login', validate(loginValidations), authController.login);
  *       401:
  *         description: No autorizado
  */
-router.get('/me', verifyToken, authController.getProfile);
+router.get('/auth/me', verifyToken, authController.getProfile);
 
 // ==================== CRUD USUARIOS ====================
 
@@ -103,14 +103,18 @@ router.get('/me', verifyToken, authController.getProfile);
  *               type: object
  *               properties:
  *                 success: { type: boolean }
- *                 data:
- *                   type: object
- *                   properties:
- *                     data: { type: array, items: { $ref: '#/components/schemas/UsuarioResponse' } }
- *                     pagination: { type: object }
- *       403:
- *         description: No autorizado (solo ADMIN)
- */
+      - in: query
+        name: page
+        schema: { type: integer, default: 1 }
+        description: Número de página
+      - in: query
+        name: limit
+        schema: { type: integer, default: 10 }
+        description: Registros por página
+      - in: query
+        name: includeInactive
+        schema: { type: boolean, default: false }
+        description: Incluir usuarios con estado INACTIVO (solo ADMIN puede usarlo)
 router.get('/usuarios', verifyToken, checkRole(['ADMIN']), authController.getAllUsers);
 
 /**
@@ -220,6 +224,29 @@ router.put('/usuarios/:id', verifyToken, checkRole(['ADMIN']), authController.up
  *         description: Usuario no encontrado
  */
 router.delete('/usuarios/:id', verifyToken, checkRole(['ADMIN']), authController.deleteUser);
+
+/**
+ * @swagger
+ * /api/v1/usuarios/{id}/reactivar:
+ *   patch:
+ *     summary: Reactivar usuario (solo ADMIN)
+ *     tags: [Usuarios]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Usuario reactivado
+ *       404:
+ *         description: Usuario no encontrado
+ *       403:
+ *         description: No autorizado
+ */
+router.patch('/usuarios/:id/reactivar', verifyToken, checkRole(['ADMIN']), authController.reactivateUser);
 
 // ==================== CRUD ROLES ====================
 

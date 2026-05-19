@@ -1,88 +1,205 @@
+const dotenv = require('dotenv');
+dotenv.config();
 const prisma = require('./prisma');
+const bcrypt = require('bcryptjs');
 
-prisma.$connect().then(() => {
-  console.log('Conexión a la base de datos establecida');
-  const planesData = [
-    { nombre: 'Mensualidad Básica', descripcion: 'Acceso a todas las áreas del gimnasio', costo: 35.00, diasDuracion: 30 },
-    { nombre: 'Trimestre VIP', descripcion: 'Acceso VIP + 2 sesiones con entrenador personal', costo: 90.00, diasDuracion: 90 },
-    { nombre: 'Pase Diario', descripcion: 'Acceso por un día', costo: 10.00, diasDuracion: 1 },
-    { nombre: 'Anual Premium', descripcion: 'Acceso por un año + beneficios exclusivos', costo: 350.00, diasDuracion: 365 }
-  ];
+async function seed() {
+  console.log('🌱 Iniciando seeding...');
 
-  for (const planData of planesData) {
-    const existing = prisma.suscripcion.findFirst({
-      where: { nombre: planData.nombre }
-    });
+  try {
+    await prisma.$connect();
+    console.log(' Conectado a PostgreSQL');
+
+      const planesData = [
+        { nombre: 'Mensualidad Básica', descripcion: 'Acceso a todas las áreas del gimnasio', costo: 35.00, diasDuracion: 30 },
+        { nombre: 'Trimestre VIP', descripcion: 'Acceso VIP + 2 sesiones con entrenador personal', costo: 90.00, diasDuracion: 90 },
+        { nombre: 'Pase Diario', descripcion: 'Acceso por un día', costo: 10.00, diasDuracion: 1 },
+        { nombre: 'Anual Premium', descripcion: 'Acceso por un año + beneficios exclusivos', costo: 350.00, diasDuracion: 365 }
+      ];
     
-    if (!existing) {
-      prisma.suscripcion.create({ data: planData });
-      console.log(` Plan "${planData.nombre}" creado`);
-    } else {
-      console.log(`⚠ Plan "${planData.nombre}" ya existe`);
-    }
-  }
-
-  // ==================== MEMBRESÍA PARA CLIENTE DE EJEMPLO ====================
-  const cliente = prisma.cliente.findFirst({
-    where: { cedula: 'V-12345678' }
-  });
-
-  const planBasico = prisma.suscripcion.findFirst({
-    where: { nombre: 'Mensualidad Básica' }
-  });
-
-  if (cliente && planBasico) {
-    const existingMembresia = prisma.membresia.findFirst({
-      where: { idCliente: cliente.id }
-    });
-  
-  if (!existingMembresia) {
-    const fechaInicio = new Date();
-    const fechaFin = new Date();
-    fechaFin.setDate(fechaFin.getDate() + planBasico.diasDuracion);
-    
-    prisma.membresia.create({
-      data: {
-        idCliente: cliente.id,
-        idSuscripcion: planBasico.id,
-        fechaInicio: fechaInicio,
-        fechaFin: fechaFin,
-        estado: 'ACTIVA'
+      for (const planData of planesData) {
+        const existing = prisma.suscripcion.findFirst({
+          where: { nombre: planData.nombre }
+        });
+        
+        if (!existing) {
+          prisma.suscripcion.create({ data: planData });
+          console.log(` Plan "${planData.nombre}" creado`);
+        } else {
+          console.log(`⚠ Plan "${planData.nombre}" ya existe`);
+        }
       }
+
+    // ==================== ROLES ====================
+    const rolesData = [
+      { nombre: 'ADMIN', descripcion: 'Administrador del sistema' },
+      { nombre: 'FINANZAS', descripcion: 'Módulo de finanzas' },
+      { nombre: 'ENTRENADOR', descripcion: 'Entrenador del gimnasio' },
+      { nombre: 'CLIENTE', descripcion: 'Cliente del gimnasio' },
+      { nombre: 'RECEPCIONISTA', descripcion: 'Atención al cliente' },
+      { nombre: 'MANTENIMIENTO', descripcion: 'Mantenimiento de máquinas' }
+    ];
+
+    const roles = [];
+    for (const rolData of rolesData) {
+      let rol = await prisma.rol.findFirst({
+        where: { nombre: rolData.nombre }
+      });
+
+      if (!rol) {
+        rol = await prisma.rol.create({ data: rolData });
+        console.log(` Rol "${rolData.nombre}" creado`);
+      } else {
+        console.log(` Rol "${rolData.nombre}" ya existe`);
+      }
+      roles.push(rol);
+    }
+
+    // ==================== USUARIO ADMIN ====================
+    const adminPassword = await bcrypt.hash('admin123', 10);
+    const adminRol = roles.find(r => r.nombre === 'ADMIN');
+    
+    let adminUsuario = await prisma.usuario.findFirst({
+      where: { email: 'admin@smartgym.com' }
     });
-    console.log(' Membresía creada para cliente de ejemplo');
-  } else {
-    console.log(' El cliente de ejemplo ya tiene una membresía');
-  }
-  }
 
-  // ==================== PAGOS DE EJEMPLO ====================
-  const membresia = prisma.membresia.findFirst({
-    where: { estado: 'ACTIVA' }
-  });
-
-  if (membresia) {
-    const existingPago = prisma.pago.findFirst({
-      where: { idMembresia: membresia.id }
-    });
-
-    if (!existingPago) {
-      prisma.pago.create({
+    if (!adminUsuario) {
+      adminUsuario = await prisma.usuario.create({
         data: {
-          idMembresia: membresia.id,
-          monto: 35.00,
-          fechaPago: new Date(),
-          metodoPago: 'EFECTIVO'
+          email: 'admin@smartgym.com',
+          password: adminPassword,
+          idRol: adminRol.id,        
+          estado: 'ACTIVO',
+          descripcion: 'Usuario administrador'  
         }
       });
-      console.log(' Pago creado para membresía de ejemplo');
+      console.log(' Usuario ADMIN creado');
     } else {
-      console.log(' La membresía de ejemplo ya tiene un pago');
+      console.log(' Usuario ADMIN ya existe');
     }
-  } else {
-    console.log(' No se encontró una membresía activa para crear un pago de ejemplo');
-  }
 
-}).catch((error) => {
-  console.error('Error al conectar a la base de datos:', error);
-});
+    // ==================== USUARIO FINANZAS ====================
+    const finanzasPassword = await bcrypt.hash('finanzas123', 10);
+    const finanzasRol = roles.find(r => r.nombre === 'FINANZAS');
+    
+    let finanzasUsuario = await prisma.usuario.findFirst({
+      where: { email: 'finanzas@smartgym.com' }
+    });
+
+    if (!finanzasUsuario) {
+      finanzasUsuario = await prisma.usuario.create({
+        data: {
+          email: 'finanzas@smartgym.com',
+          password: finanzasPassword,
+          idRol: finanzasRol.id,        
+          estado: 'ACTIVO',
+          descripcion: 'Usuario de finanzas'
+        }
+      });
+      console.log(' Usuario FINANZAS creado');
+    } else {
+      console.log(' Usuario FINANZAS ya existe');
+    }
+
+    // ==================== USUARIO CLIENTE ====================
+    const clientePassword = await bcrypt.hash('cliente123', 10);
+    const clienteRol = roles.find(r => r.nombre === 'CLIENTE');
+    
+    let clienteUsuario = await prisma.usuario.findFirst({
+      where: { email: 'cliente@smartgym.com' }
+    });
+
+    if (!clienteUsuario) {
+      clienteUsuario = await prisma.usuario.create({
+        data: {
+          email: 'cliente@smartgym.com',
+          password: clientePassword,
+          idRol: clienteRol.id,       
+          estado: 'ACTIVO',
+          descripcion: 'Cliente del gimnasio'
+        }
+      });
+
+      await prisma.cliente.create({
+        data: {
+          idUsuario: clienteUsuario.id,
+          cedula: 'V-12345678',
+          nombre: 'Juan',
+          apellido: 'Pérez',
+          telefono: '04129876543'
+        }
+      });
+      console.log(' Usuario CLIENTE creado');
+    } else {
+      console.log(' Usuario CLIENTE ya existe');
+    }
+
+    // ==================== USUARIO ENTRENADOR ====================
+    const entrenadorPassword = await bcrypt.hash('entrenador123', 10);
+    const entrenadorRol = roles.find(r => r.nombre === 'ENTRENADOR');
+    
+    let entrenadorUsuario = await prisma.usuario.findFirst({
+      where: { email: 'entrenador@smartgym.com' }
+    });
+
+    if (!entrenadorUsuario) {
+      entrenadorUsuario = await prisma.usuario.create({
+        data: {
+          email: 'entrenador@smartgym.com',
+          password: entrenadorPassword,
+          idRol: entrenadorRol.id,        
+          estado: 'ACTIVO',
+          descripcion: 'Entrenador del gimnasio'
+        }
+      });
+
+      await prisma.entrenador.create({
+        data: {
+          idUsuario: entrenadorUsuario.id,
+          especialidad: 'Yoga y Pilates'
+        }
+      });
+      console.log(' Usuario ENTRENADOR creado');
+    } else {
+      console.log(' Usuario ENTRENADOR ya existe');
+    }
+
+    // ==================== USUARIO RECEPCIONISTA ====================
+    const recepcionistaPassword = await bcrypt.hash('recepcion123', 10);
+    const recepcionistaRol = roles.find(r => r.nombre === 'RECEPCIONISTA');
+    
+    let recepcionistaUsuario = await prisma.usuario.findFirst({
+      where: { email: 'recepcion@smartgym.com' }
+    });
+
+    if (!recepcionistaUsuario) {
+      recepcionistaUsuario = await prisma.usuario.create({
+        data: {
+          email: 'recepcion@smartgym.com',
+          password: recepcionistaPassword,
+          idRol: recepcionistaRol.id,        
+          estado: 'ACTIVO',
+          descripcion: 'Recepcionista del gimnasio'
+        }
+      });
+      console.log(' Usuario RECEPCIONISTA creado');
+    } else {
+      console.log('c Usuario RECEPCIONISTA ya existe');
+    }
+
+    console.log('\n Seeding completado con éxito');
+    console.log('\n Credenciales de prueba:');
+    console.log('   ADMIN:       admin@smartgym.com / admin123');
+    console.log('   FINANZAS:    finanzas@smartgym.com / finanzas123');
+    console.log('   CLIENTE:     cliente@smartgym.com / cliente123');
+    console.log('   ENTRENADOR:  entrenador@smartgym.com / entrenador123');
+    console.log('   RECEPCION:   recepcion@smartgym.com / recepcion123');
+
+  } catch (error) {
+    console.error(' Error en seeding:', error);
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+seed();

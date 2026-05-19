@@ -9,7 +9,7 @@ const { checkRole } = require('../middlewares/rbac.middleware');
 
 /**
  * @swagger
- * /suscripciones/planes:
+ * /api/v1/suscripciones/planes:
  *   get:
  *     summary: Listar todos los planes de suscripción
  *     tags: [Planes de Suscripción]
@@ -41,7 +41,7 @@ router.get('/planes', verifyToken, suscripcionController.getAllSuscripciones);
 
 /**
  * @swagger
- * /suscripciones/planes/{id}:
+ * /api/v1/suscripciones/planes/{id}:
  *   get:
  *     summary: Obtener plan por ID
  *     tags: [Planes de Suscripción]
@@ -66,7 +66,7 @@ router.get('/planes/:id', verifyToken, suscripcionController.getSuscripcionById)
 
 /**
  * @swagger
- * /suscripciones/planes:
+ * /api/v1/suscripciones/planes:
  *   post:
  *     summary: Crear nuevo plan de suscripción
  *     tags: [Planes de Suscripción]
@@ -92,7 +92,7 @@ router.post('/planes', verifyToken, checkRole(['ADMIN', 'FINANZAS']), suscripcio
 
 /**
  * @swagger
- * /suscripciones/planes/{id}:
+ * /api/v1/suscripciones/planes/{id}:
  *   put:
  *     summary: Actualizar plan de suscripción
  *     tags: [Planes de Suscripción]
@@ -123,7 +123,7 @@ router.put('/planes/:id', verifyToken, checkRole(['ADMIN', 'FINANZAS']), suscrip
 
 /**
  * @swagger
- * /suscripciones/planes/{id}:
+ * /api/v1/suscripciones/planes/{id}:
  *   delete:
  *     summary: Eliminar plan de suscripción
  *     description: Solo se puede eliminar si no tiene membresías asociadas
@@ -149,7 +149,7 @@ router.delete('/planes/:id', verifyToken, checkRole(['ADMIN', 'FINANZAS']), susc
 
 /**
  * @swagger
- * /suscripciones/clientes/{clienteId}/membresias:
+ * /api/v1/suscripciones/clientes/{clienteId}/membresias:
  *   get:
  *     summary: Listar membresías de un cliente
  *     tags: [Membresías]
@@ -176,7 +176,7 @@ router.get('/clientes/:clienteId/membresias', verifyToken, suscripcionController
 
 /**
  * @swagger
- * /suscripciones/clientes/{clienteId}/membresia-activa:
+ * /api/v1/suscripciones/clientes/{clienteId}/membresia-activa:
  *   get:
  *     summary: Obtener membresía activa de un cliente
  *     tags: [Membresías]
@@ -197,7 +197,7 @@ router.get('/clientes/:clienteId/membresia-activa', verifyToken, suscripcionCont
 
 /**
  * @swagger
- * /suscripciones/clientes/{clienteId}/verificar-acceso:
+ * /api/v1/suscripciones/clientes/{clienteId}/verificar-acceso:
  *   get:
  *     summary: Verificar si un cliente tiene acceso (membresía activa)
  *     tags: [Membresías]
@@ -228,7 +228,7 @@ router.get('/clientes/:clienteId/verificar-acceso', verifyToken, suscripcionCont
 
 /**
  * @swagger
- * /suscripciones/membresias/{id}:
+ * /api/v1/suscripciones/membresias/{id}:
  *   get:
  *     summary: Obtener membresía por ID
  *     tags: [Membresías]
@@ -249,7 +249,7 @@ router.get('/membresias/:id', verifyToken, suscripcionController.getMembresiaByI
 
 /**
  * @swagger
- * /suscripciones/membresias:
+ * /api/v1/suscripciones/membresias:
  *   post:
  *     summary: Crear nueva membresía para un cliente
  *     tags: [Membresías]
@@ -278,7 +278,7 @@ router.post('/membresias', verifyToken, checkRole(['ADMIN', 'FINANZAS']), suscri
 
 /**
  * @swagger
- * /suscripciones/membresias/{id}/renovar:
+ * /api/v1/suscripciones/membresias/{id}/renovar:
  *   post:
  *     summary: Renovar una membresía existente
  *     tags: [Membresías]
@@ -308,7 +308,7 @@ router.post('/membresias/:id/renovar', verifyToken, checkRole(['ADMIN', 'FINANZA
 
 /**
  * @swagger
- * /suscripciones/pagos:
+ * /api/v1/suscripciones/pagos:
  *   post:
  *     summary: Registrar un pago
  *     tags: [Pagos]
@@ -338,7 +338,7 @@ router.post('/pagos', verifyToken, checkRole(['ADMIN', 'FINANZAS']), suscripcion
 
 /**
  * @swagger
- * /suscripciones/membresias/{membresiaId}/pagos:
+ * /api/v1/suscripciones/membresias/{membresiaId}/pagos:
  *   get:
  *     summary: Listar pagos de una membresía
  *     tags: [Pagos]
@@ -363,7 +363,7 @@ router.get('/membresias/:membresiaId/pagos', verifyToken, suscripcionController.
 
 /**
  * @swagger
- * /suscripciones/clientes/{clienteId}/pagos:
+ * /api/v1/suscripciones/clientes/{clienteId}/pagos:
  *   get:
  *     summary: Listar todos los pagos de un cliente
  *     tags: [Pagos]

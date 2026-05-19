@@ -212,20 +212,20 @@ const options = {
         },
 
         CategoriaResponse: {
-          type: 'object',
-          properties: {
-              success: { type: 'boolean', example: true },
-              message: { type: 'string' },
-              data: {
-                type: 'object',
-                properties: {
-                    id: { type: 'integer' },
-                    nombre: { type: 'string' },
-                    descripcion: { type: 'string' },
-                    maquinas: { type: 'array', items: { $ref: '#/components/schemas/MaquinaResponse' } }
-                }
-              }
-          }
+        type: 'object',
+        properties: {
+            success: { type: 'boolean', example: true },
+            message: { type: 'string' },
+            data: {
+            type: 'object',
+            properties: {
+                id: { type: 'integer' },
+                nombre: { type: 'string' },
+                descripcion: { type: 'string' },
+                maquinas: { type: 'array', items: { $ref: '#/components/schemas/MaquinaResponse' } }
+            }
+            }
+        }
         },
         // ==================== PLANES DE SUSCRIPCIÓN ====================
         PlanSuscripcionRequest: {

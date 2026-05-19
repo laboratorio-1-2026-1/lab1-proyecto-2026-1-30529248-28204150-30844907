@@ -9,7 +9,7 @@ const { checkRole } = require('../middlewares/rbac.middleware');
 
 /**
  * @swagger
- * /maquinas:
+ * /api/v1/maquinas:
  *   get:
  *     summary: Listar todas las máquinas
  *     description: Obtiene una lista paginada de máquinas con filtros opcionales
@@ -49,34 +49,11 @@ const { checkRole } = require('../middlewares/rbac.middleware');
  */
 router.get('/', verifyToken, maquinaController.getAllMaquinas);
 
-/**
- * @swagger
- * /maquinas/{id}:
- *   get:
- *     summary: Obtener máquina por ID
- *     tags: [Máquinas]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: integer }
- *     responses:
- *       200:
- *         description: Máquina encontrada
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/MaquinaResponse'
- *       404:
- *         description: Máquina no encontrada
- */
-router.get('/:id', verifyToken, maquinaController.getMaquinaById);
+// Nota: `GET /:id` se moverá más abajo para evitar conflicto con rutas estáticas como `/categorias` y `/codigo/:codigo`
 
 /**
  * @swagger
- * /maquinas/codigo/{codigo}:
+ * /api/v1/maquinas/codigo/{codigo}:
  *   get:
  *     summary: Obtener máquina por código
  *     tags: [Máquinas]
@@ -101,7 +78,7 @@ router.get('/codigo/:codigo', verifyToken, maquinaController.getMaquinaByCodigo)
 
 /**
  * @swagger
- * /maquinas:
+ * /api/v1/maquinas:
  *   post:
  *     summary: Crear nueva máquina
  *     tags: [Máquinas]
@@ -129,7 +106,7 @@ router.post('/', verifyToken, checkRole(['ADMIN']), maquinaController.createMaqu
 
 /**
  * @swagger
- * /maquinas/{id}:
+ * /api/v1/maquinas/{id}:
  *   put:
  *     summary: Actualizar máquina
  *     tags: [Máquinas]
@@ -162,7 +139,7 @@ router.put('/:id', verifyToken, checkRole(['ADMIN']), maquinaController.updateMa
 
 /**
  * @swagger
- * /maquinas/{id}/estado:
+ * /api/v1/maquinas/{id}/estado:
  *   patch:
  *     summary: Cambiar estado de una máquina
  *     description: Permite cambiar el estado operativo de una máquina
@@ -196,7 +173,7 @@ router.patch('/:id/estado', verifyToken, checkRole(['ADMIN', 'MANTENIMIENTO']), 
 
 /**
  * @swagger
- * /maquinas/{id}:
+ * /api/v1/maquinas/{id}:
  *   delete:
  *     summary: Eliminar máquina (soft delete)
  *     description: Cambia el estado de la máquina a FUERA_SERVICIO
@@ -226,7 +203,7 @@ router.delete('/:id', verifyToken, checkRole(['ADMIN']), maquinaController.delet
 
 /**
  * @swagger
- * /maquinas/categorias:
+ * /api/v1/maquinas/categorias:
  *   get:
  *     summary: Listar todas las categorías
  *     tags: [Categorías de Máquinas]
@@ -247,7 +224,7 @@ router.get('/categorias', verifyToken, maquinaController.getAllCategorias);
 
 /**
  * @swagger
- * /maquinas/categorias/{id}:
+ * /api/v1/maquinas/categorias/{id}:
  *   get:
  *     summary: Obtener categoría por ID
  *     tags: [Categorías de Máquinas]
@@ -272,7 +249,7 @@ router.get('/categorias/:id', verifyToken, maquinaController.getCategoriaById);
 
 /**
  * @swagger
- * /maquinas/categorias:
+ * /api/v1/maquinas/categorias:
  *   post:
  *     summary: Crear nueva categoría
  *     tags: [Categorías de Máquinas]
@@ -300,7 +277,7 @@ router.post('/categorias', verifyToken, checkRole(['ADMIN']), maquinaController.
 
 /**
  * @swagger
- * /maquinas/categorias/{id}:
+ * /api/v1/maquinas/categorias/{id}:
  *   put:
  *     summary: Actualizar categoría
  *     tags: [Categorías de Máquinas]
@@ -333,7 +310,7 @@ router.put('/categorias/:id', verifyToken, checkRole(['ADMIN']), maquinaControll
 
 /**
  * @swagger
- * /maquinas/categorias/{id}:
+ * /api/v1/maquinas/categorias/{id}:
  *   delete:
  *     summary: Eliminar categoría
  *     description: Solo se puede eliminar si no tiene máquinas asociadas
@@ -361,5 +338,30 @@ router.put('/categorias/:id', verifyToken, checkRole(['ADMIN']), maquinaControll
  *         description: Categoría no encontrada
  */
 router.delete('/categorias/:id', verifyToken, checkRole(['ADMIN']), maquinaController.deleteCategoria);
+
+/**
+ * @swagger
+ * /api/v1/maquinas/{id}:
+ *   get:
+ *     summary: Obtener máquina por ID
+ *     tags: [Máquinas]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Máquina encontrada
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MaquinaResponse'
+ *       404:
+ *         description: Máquina no encontrada
+ */
+router.get('/:id', verifyToken, maquinaController.getMaquinaById);
 
 module.exports = router;

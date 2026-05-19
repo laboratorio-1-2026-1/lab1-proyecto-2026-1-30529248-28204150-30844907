@@ -1,14 +1,21 @@
 const { HTTP_STATUS, CODIGOS_ERROR, MENSAJES } = require('../config/constantes');
 
 const errorHandler = (err, req, res, next) => {
+  // Normalizar si el código lanza un objeto plano en lugar de una instancia de Error
+  if (!(err instanceof Error)) {
+    const normalized = new Error(err.message || 'Error');
+    Object.assign(normalized, err);
+    err = normalized;
+  }
+
   console.error('Error:', err);
 
-  // Si el error ya tiene estructura definida
-  if (err.status && err.code) {
+  // Si el error ya tiene estructura definida (permite errores con `status` aunque falte `code`)
+  if (err.status) {
     return res.status(err.status).json({
       error: getErrorName(err.status),
-      codigoInterno: err.code,
-      mensaje: err.message,
+      codigoInterno: err.code || CODIGOS_ERROR.DATOS_INVALIDOS,
+      mensaje: err.message || MENSAJES.ERROR[err.status] || 'Error',
       timestamp: new Date().toISOString(),
       ...(err.details && { detalles: err.details })
     });

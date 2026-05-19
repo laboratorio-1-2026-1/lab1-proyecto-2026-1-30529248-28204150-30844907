@@ -18,12 +18,17 @@ const errorHandler = require('./middlewares/errorHandler.middleware');
 // Importar controladores
 const authController = require('./controllers/auth.controller');
 const rolController = require('./controllers/rol.controller');
+const maquinaController = require('./controllers/maquina.controller');
 
 // Importar rutas
 const maquinaRoutes = require('./routes/maquina.routes');
+// ==================== MÓDULO 3: PLANES DE SUSCRIPCIÓN Y PAGOS ====================
 const suscripcionRoutes = require('./routes/suscripcion.routes');
 const deportivoRoutes = require('./routes/deportivo.routes');
 const reservaRoutes = require('./routes/reserva.routes');
+
+
+// ==================== MANEJO DE ERRORES ====================
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -61,42 +66,21 @@ app.get('/health', (req, res) => {
 
 // ==================== RUTAS DE API ====================
 
-// Autenticación
-app.post('/api/v1/auth/login', (req, res, next) => {
-  authController.login(req, res, next);
-});
+// Utilizar archivo de rutas (contiene autenticación, usuarios y roles)
+const authRoutes = require('./routes/auth.routes');
 
-app.get('/api/v1/auth/me', (req, res, next) => {
-  authController.getProfile(req, res, next);
-});
-
-// ==================== MÓDULO 1: GESTIÓN DE USUARIOS ====================
-
-// CRUD Usuarios (solo ADMIN)
-app.get('/api/v1/usuarios', verifyToken, checkRole(['ADMIN']), authController.getAllUsers);
-app.get('/api/v1/usuarios/:id', verifyToken, checkRole(['ADMIN']), authController.getUserById);
-app.post('/api/v1/usuarios', verifyToken, checkRole(['ADMIN']), authController.register);
-app.put('/api/v1/usuarios/:id', verifyToken, checkRole(['ADMIN']), authController.updateUser);
-app.delete('/api/v1/usuarios/:id', verifyToken, checkRole(['ADMIN']), authController.deleteUser);
-
-// CRUD Roles (solo ADMIN)
-app.get('/api/v1/roles', verifyToken, checkRole(['ADMIN']), rolController.getAllRoles);
-app.get('/api/v1/roles/:id', verifyToken, checkRole(['ADMIN']), rolController.getRolById);
-app.post('/api/v1/roles', verifyToken, checkRole(['ADMIN']), rolController.createRol);
-app.put('/api/v1/roles/:id', verifyToken, checkRole(['ADMIN']), rolController.updateRol);
-app.delete('/api/v1/roles/:id', verifyToken, checkRole(['ADMIN']), rolController.deleteRol);
+// Montar rutas del módulo de autenticación/usuarios/roles en /api/v1
+app.use('/api/v1', authRoutes);
 
 // ==================== MÓDULO 2: INVENTARIO DE MÁQUINAS ====================
 app.use('/api/v1/maquinas', maquinaRoutes);
-
-// ==================== MÓDULO 3: PLANES DE SUSCRIPCIÓN Y PAGOS ====================
 
 app.use('/api/v1/suscripciones', suscripcionRoutes);
 
 // ==================== MÓDULO 4: GESTIÓN DE CLASES Y RESERVAS ====================
 
 
-app.use('/api/v1/clases', claseRoutes);
+//app.use('/api/v1/clases', claseRoutes);
 
 // ==================== MÓDULO 5: GESTIÓN DEPORTIVA ====================
 

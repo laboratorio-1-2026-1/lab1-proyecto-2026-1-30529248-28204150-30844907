@@ -7,6 +7,7 @@ export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
+    seed: "npx tsx src/db/seed.js",
   },
   datasource: {
     url: process.env["DATABASE_URL"] || "postgresql://postgres:Admin@localhost:5433/smartgym?schema=public",

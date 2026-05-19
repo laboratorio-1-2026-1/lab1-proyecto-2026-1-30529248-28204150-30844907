@@ -36,7 +36,7 @@ const rolePermissions = {
  */
 const checkRole = (allowedRoles) => {
   return (req, res, next) => {
-    const userRole = req.user?.rolNombre;
+    const userRole = (req.user?.rolNombre || req.user?.rol || '').toString().toUpperCase();
 
     if (!userRole) {
       return res.status(HTTP_STATUS.FORBIDDEN).json({
@@ -47,7 +47,8 @@ const checkRole = (allowedRoles) => {
       });
     }
 
-    if (allowedRoles.includes(userRole)) {
+    const allowedUpper = allowedRoles.map(r => r.toString().toUpperCase());
+    if (allowedUpper.includes(userRole)) {
       return next();
     }
 
@@ -67,7 +68,7 @@ const checkRole = (allowedRoles) => {
  */
 const checkPermission = (module, method = null) => {
   return (req, res, next) => {
-    const userRole = req.user?.rolNombre;
+    const userRole = (req.user?.rolNombre || req.user?.rol || '').toString().toUpperCase();
     const httpMethod = method || req.method;
 
     if (!userRole) {
@@ -101,7 +102,8 @@ const checkPermission = (module, method = null) => {
       allowedRoles = [];
     }
 
-    if (allowedRoles.includes(userRole)) {
+    const allowedUpper = allowedRoles.map(r => r.toString().toUpperCase());
+    if (allowedUpper.includes(userRole)) {
       return next();
     }
 

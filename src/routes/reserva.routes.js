@@ -8,7 +8,7 @@ const { checkRole } = require('../middlewares/rbac.middleware');
 
 /**
  * @swagger
- * /reservas/disponibilidad:
+ * /api/v1/reservas/disponibilidad:
  *   get:
  *     summary: Consultar sesiones disponibles para reservar
  *     description: Retorna las sesiones con cupos disponibles, aplicando filtros opcionales
@@ -71,7 +71,7 @@ router.get('/disponibilidad', verifyToken, reservaController.getSesionesDisponib
 
 /**
  * @swagger
- * /reservas:
+ * /api/v1/reservas:
  *   post:
  *     summary: Crear una nueva reserva
  *     description: Un cliente puede reservar una sesión si hay cupos disponibles y no tiene conflicto de horario
@@ -116,7 +116,7 @@ router.post('/', verifyToken, reservaController.crearReserva);
 
 /**
  * @swagger
- * /reservas/mis-reservas:
+ * /api/v1/reservas/mis-reservas:
  *   get:
  *     summary: Ver mis reservas activas
  *     description: Retorna todas las reservas activas del cliente autenticado
@@ -140,7 +140,7 @@ router.get('/mis-reservas', verifyToken, reservaController.getMisReservas);
 
 /**
  * @swagger
- * /reservas/{id}:
+ * /api/v1/reservas/{id}:
  *   delete:
  *     summary: Cancelar mi reserva
  *     description: Un cliente puede cancelar su propia reserva (si no ha pasado la sesión)
@@ -169,7 +169,7 @@ router.delete('/:id', verifyToken, reservaController.cancelarReserva);
 
 /**
  * @swagger
- * /reservas/cliente/{clienteId}:
+ * /api/v1/reservas/cliente/{clienteId}:
  *   get:
  *     summary: Ver reservas de un cliente (ADMIN)
  *     tags: [Reservas - Admin]
@@ -197,7 +197,7 @@ router.get('/cliente/:clienteId', verifyToken, checkRole(['ADMIN']), reservaCont
 
 /**
  * @swagger
- * /reservas/cliente/{clienteId}/historial:
+ * /api/v1/reservas/cliente/{clienteId}/historial:
  *   get:
  *     summary: Ver historial completo de reservas de un cliente (ADMIN)
  *     description: Incluye reservas activas y canceladas
@@ -225,7 +225,7 @@ router.get('/cliente/:clienteId/historial', verifyToken, checkRole(['ADMIN']), r
 
 /**
  * @swagger
- * /reservas/admin/{id}:
+ * /api/v1/reservas/admin/{id}:
  *   delete:
  *     summary: Cancelar cualquier reserva (ADMIN)
  *     description: Un administrador puede cancelar cualquier reserva sin restricciones

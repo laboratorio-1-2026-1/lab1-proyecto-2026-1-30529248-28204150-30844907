@@ -36,7 +36,8 @@ class AuthController {
     try {
       const page = parseInt(req.query.page) || 1;
       const limit = parseInt(req.query.limit) || 10;
-      const result = await authService.getAllUsers(page, limit);
+      const includeInactive = req.query.includeInactive === 'true' || req.query.showInactive === 'true';
+      const result = await authService.getAllUsers(page, limit, includeInactive);
       res.status(HTTP_STATUS.OK).json({ success: true, data: result });
     } catch (error) {
       next(error);
@@ -54,7 +55,8 @@ class AuthController {
 
   async updateUser(req, res, next) {
     try {
-      const updatedUser = await authService.updateUser(req.params.id, req.body);
+      const requesterId = req.user?.id;
+      const updatedUser = await authService.updateUser(req.params.id, req.body, requesterId);
       res.status(HTTP_STATUS.OK).json({ 
         success: true, 
         message: 'Usuario actualizado exitosamente', 
@@ -67,7 +69,8 @@ class AuthController {
 
   async deleteUser(req, res, next) {
     try {
-      const deletedUser = await authService.deleteUser(req.params.id);
+      const requesterId = req.user?.id;
+      const deletedUser = await authService.deleteUser(req.params.id, requesterId);
       res.status(HTTP_STATUS.OK).json({ 
         success: true, 
         message: 'Usuario eliminado exitosamente', 
@@ -77,27 +80,29 @@ class AuthController {
       next(error);
     }
   }
+
+  async reactivateUser(req, res, next) {
+    try {
+      const requesterId = req.user?.id;
+      const reactivated = await authService.reactivateUser(req.params.id, requesterId);
+      res.status(HTTP_STATUS.OK).json({ success: true, message: 'Usuario reactivado exitosamente', data: reactivated });
+    } catch (error) {
+      next(error);
+    }
+  }
   
   async getProfile(req, res, next) {
     try {
-      if (!req.user?.id) {
-        console.log(`🔍 Buscando perfil para usuario ID: ${req.user?.id}`);
-        return res.status(401).json({
-          success: false,
-          message: 'No autenticado'
-        });
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(HTTP_STATUS.UNAUTHORIZED).json({ success: false, message: 'No autenticado' });
       }
-      let user
-      if (req.user?.id === undefined || req.user?.id === null) {
-        user = await authService.getProfile(authService.user);
-      } else if (req.user?.id !== undefined && req.user?.id !== null) {
-        user = await authService.getProfile(req.user?.id);
-      }
+      const user = await authService.getProfile(userId);
       return res.status(HTTP_STATUS.OK).json({
         success: true,
         data: {
           user: user,
-          rol: user.rolNombre,
+          rol: user.rol,
         }
       });
       
