@@ -14,7 +14,11 @@ class SuscripcionService {
       }),
       prisma.suscripcion.count()
     ]);
-    
+    // Si no hay planes registrados, devolver 404
+    if (total === 0) {
+      throw { status: 404, code: CODIGOS_ERROR.NO_ENCONTRADO, message: 'No se encontraron planes de suscripción' };
+    }
+
     return {
       data: suscripciones,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
