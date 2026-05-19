@@ -34,6 +34,7 @@ class ReservaService {
   
   async crearReserva(usuarioId, sesionId) {
     const cliente = await prisma.cliente.findFirst({ where: { idUsuario: parseInt(usuarioId) } });
+    console.log('crearReserva - usuarioId:', usuarioId, ' -> cliente encontrado:', cliente && cliente.id);
     if (!cliente) throw { status: 404, message: 'Cliente no encontrado' };
     
     const sesion = await prisma.sesion.findUnique({
@@ -73,10 +74,17 @@ class ReservaService {
     });
     if (reservaExistente) throw { status: 409, code: 'RESERVA_DUPLICADA', message: 'Ya tienes una reserva en esta sesión' };
     
-    return await prisma.reserva.create({
-      data: { idCliente: cliente.id, idSesion: parseInt(sesionId), fecha: new Date(), estado: 'ACTIVA' },
-      include: { sesion: { include: { disciplina: true, entrenador: { include: { usuario: true } } } } }
-    });
+    try {
+      const created = await prisma.reserva.create({
+        data: { idCliente: cliente.id, idSesion: parseInt(sesionId), fecha: new Date(), estado: 'ACTIVA' },
+        include: { sesion: { include: { disciplina: true, entrenador: { include: { usuario: true } } } } }
+      });
+      console.log('crearReserva - reserva creada:', created && created.id);
+      return created;
+    } catch (err) {
+      console.error('crearReserva - error creando reserva:', err);
+      throw err;
+    }
   }
   
   async getMisReservas(usuarioId, page = 1, limit = 10) {
