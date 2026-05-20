@@ -94,6 +94,10 @@ router.get('/auth/me', verifyToken, authController.getProfile);
  *         name: limit
  *         schema: { type: integer, default: 10 }
  *         description: Registros por página
+ *       - in: query
+ *         name: includeInactive
+ *         schema: { type: boolean, default: false }
+ *         description: Incluir usuarios con estado INACTIVO (solo ADMIN puede usarlo)
  *     responses:
  *       200:
  *         description: Lista de usuarios
@@ -103,18 +107,22 @@ router.get('/auth/me', verifyToken, authController.getProfile);
  *               type: object
  *               properties:
  *                 success: { type: boolean }
-      - in: query
-        name: page
-        schema: { type: integer, default: 1 }
-        description: Número de página
-      - in: query
-        name: limit
-        schema: { type: integer, default: 10 }
-        description: Registros por página
-      - in: query
-        name: includeInactive
-        schema: { type: boolean, default: false }
-        description: Incluir usuarios con estado INACTIVO (solo ADMIN puede usarlo)
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Usuario'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page: { type: integer }
+ *                     limit: { type: integer }
+ *                     total: { type: integer }
+ *                     pages: { type: integer }
+ *       401:
+ *         description: No autorizado
+ *       403:
+ *         description: Acceso denegado (solo ADMIN)
+ */
 router.get('/usuarios', verifyToken, checkRole(['ADMIN']), authController.getAllUsers);
 
 /**
