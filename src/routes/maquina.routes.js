@@ -1,4 +1,3 @@
-// src/routes/maquina.routes.js
 const express = require('express');
 const router = express.Router();
 const maquinaController = require('../controllers/maquina.controller');

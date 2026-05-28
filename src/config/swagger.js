@@ -18,6 +18,25 @@ const options = {
         description: 'Servidor de desarrollo'
       }
     ],
+    tags: [
+      { name: 'Autenticación', description: 'Módulo 1 - Login, registro y perfil' },
+      { name: 'Usuarios', description: 'Módulo 1 - CRUD de usuarios' },
+      { name: 'Roles', description: 'Módulo 1 - CRUD de roles' },
+      { name: 'Máquinas', description: 'Módulo 2 - Inventario de máquinas' },
+      { name: 'Categorías de Máquinas', description: 'Módulo 2 - Categorías' },
+      { name: 'Gestión Deportiva - Disciplinas', description: 'Módulo 3 - Disciplinas deportivas' },
+      { name: 'Gestión Deportiva - Entrenadores', description: 'Módulo 3 - Entrenadores' },
+      { name: 'Gestión Deportiva - Sesiones', description: 'Módulo 3 - Clases programadas' },
+      { name: 'Reservas', description: 'Módulo 4 - Reservas de clases' },
+      { name: 'Reservas - Admin', description: 'Módulo 4 - Gestión de reservas (Admin)' },
+      { name: 'Control de Acceso', description: 'Módulo 5 - Registro de entradas' },
+      { name: 'Planes de Suscripción', description: 'Módulo 6 - Planes y membresías' },
+      { name: 'Membresías', description: 'Módulo 6 - Membresías de clientes' },
+      { name: 'Pagos', description: 'Módulo 6 - Registro de pagos' },
+      { name: 'Seguimiento Biométrico', description: 'Módulo 7 - Evaluaciones físicas' },
+      { name: 'Tienda (POS)', description: 'Módulo 8 - Productos y ventas' },
+      { name: 'Mantenimiento', description: 'Módulo 9 - Tickets de mantenimiento' }
+    ],
     components: {
       securitySchemes: {
         bearerAuth: {
@@ -477,6 +496,186 @@ const options = {
             hayCupos: { type: 'boolean' },
             disciplina: { $ref: '#/components/schemas/DisciplinaResponse' },
             entrenador: { $ref: '#/components/schemas/EntrenadorResponse' }
+          }
+        },
+        
+        // ==================== CONTROL DE ACCESO ====================
+        RegistroEntradaRequest: {
+          type: 'object',
+          required: ['cedula'],
+          properties: {
+            cedula: { type: 'string', example: 'V-12345678' }
+          }
+        },
+
+        RegistroEntradaResponse: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            message: { type: 'string' },
+            data: {
+              type: 'object',
+              properties: {
+                acceso: { type: 'object' },
+                cliente: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'integer' },
+                    nombre: { type: 'string' },
+                    apellido: { type: 'string' },
+                    cedula: { type: 'string' }
+                  }
+                },
+                membresia: {
+                  type: 'object',
+                  properties: {
+                    plan: { type: 'string' },
+                    fechaInicio: { type: 'string', format: 'date' },
+                    fechaFin: { type: 'string', format: 'date' },
+                    diasRestantes: { type: 'integer' },
+                    estado: { type: 'string' }
+                  }
+                }
+              }
+            }
+          }
+        },
+
+        // ==================== SEGUIMIENTO BIOMÉTRICO ====================
+        EvaluacionBiometricaRequest: {
+          type: 'object',
+          required: ['idCliente', 'idEntrenador', 'peso', 'estatura'],
+          properties: {
+            idCliente: { type: 'integer', example: 1 },
+            idEntrenador: { type: 'integer', example: 1 },
+            peso: { type: 'number', example: 75.5 },
+            estatura: { type: 'number', example: 1.75 },
+            porcentajeGrasa: { type: 'number', example: 18.5 },
+            observaciones: { type: 'string', example: 'Buena evolución' }
+          }
+        },
+
+        EvaluacionBiometricaResponse: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer' },
+            peso: { type: 'number' },
+            estatura: { type: 'number' },
+            porcentajeGrasa: { type: 'number' },
+            observaciones: { type: 'string' },
+            fechaEvaluacion: { type: 'string', format: 'date-time' },
+            evolucion: {
+              type: 'object',
+              properties: {
+                peso: { type: 'number' },
+                porcentajeGrasa: { type: 'number' },
+                diasDiferencia: { type: 'integer' }
+              }
+            }
+          }
+        },
+
+        // ==================== TIENDA ====================
+        ProductoRequest: {
+          type: 'object',
+          required: ['nombre', 'precio'],
+          properties: {
+            nombre: { type: 'string', example: 'Proteína Whey' },
+            descripcion: { type: 'string', example: 'Suplemento proteico' },
+            precio: { type: 'number', example: 45.00 },
+            stock: { type: 'integer', example: 20 }
+          }
+        },
+
+        ProductoResponse: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer' },
+            nombre: { type: 'string' },
+            descripcion: { type: 'string' },
+            precio: { type: 'number' },
+            stock: { type: 'integer' }
+          }
+        },
+
+        VentaRequest: {
+          type: 'object',
+          required: ['idCliente', 'items'],
+          properties: {
+            idCliente: { type: 'integer', example: 1 },
+            items: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  idProducto: { type: 'integer', example: 1 },
+                  cantidad: { type: 'integer', example: 2 }
+                }
+              }
+            }
+          }
+        },
+
+        VentaResponse: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer' },
+            idCliente: { type: 'integer' },
+            fecha: { type: 'string', format: 'date-time' },
+            monto: { type: 'number' },
+            detalles: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'integer' },
+                  cantidad: { type: 'integer' },
+                  precioUnitario: { type: 'number' },
+                  subtotal: { type: 'number' },
+                  producto: { $ref: '#/components/schemas/ProductoResponse' }
+                }
+              }
+            }
+          }
+        },
+
+        AjusteStockRequest: {
+          type: 'object',
+          required: ['cantidad', 'operacion'],
+          properties: {
+            cantidad: { type: 'integer', example: 5 },
+            operacion: { type: 'string', enum: ['sumar', 'restar'], example: 'sumar' }
+          }
+        },
+
+        // ==================== MANTENIMIENTO ====================
+        TicketMantenimientoRequest: {
+          type: 'object',
+          required: ['idMaquina', 'descripcionFalla'],
+          properties: {
+            idMaquina: { type: 'integer', example: 1 },
+            descripcionFalla: { type: 'string', example: 'Ruido extraño en la banda' }
+          }
+        },
+
+        TicketMantenimientoResponse: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer' },
+            idMaquina: { type: 'integer' },
+            fechaFalla: { type: 'string', format: 'date-time' },
+            descripcionFalla: { type: 'string' },
+            fechaResolucion: { type: 'string', format: 'date-time' },
+            costoReparacion: { type: 'number' },
+            maquina: { $ref: '#/components/schemas/MaquinaResponse' }
+          }
+        },
+
+        ResolverTicketRequest: {
+          type: 'object',
+          properties: {
+            costoReparacion: { type: 'number', example: 150.00 },
+            descripcionResolucion: { type: 'string', example: 'Se cambió la banda' }
           }
         }
       }

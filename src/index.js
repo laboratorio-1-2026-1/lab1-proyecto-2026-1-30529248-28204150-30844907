@@ -22,10 +22,13 @@ const maquinaController = require('./controllers/maquina.controller');
 
 // Importar rutas
 const maquinaRoutes = require('./routes/maquina.routes');
-// ==================== MÓDULO 3: PLANES DE SUSCRIPCIÓN Y PAGOS ====================
 const suscripcionRoutes = require('./routes/suscripcion.routes');
 const deportivoRoutes = require('./routes/deportivo.routes');
 const reservaRoutes = require('./routes/reserva.routes');
+const accesoRoutes = require('./routes/acceso.routes');
+const biometricoRoutes = require('./routes/biometrico.routes');
+const tiendaRoutes = require('./routes/tienda.routes');
+const mantenimientoRoutes = require('./routes/mantenimiento.routes');
 
 
 // ==================== MANEJO DE ERRORES ====================
@@ -64,7 +67,7 @@ app.get('/health', (req, res) => {
   res.json({ success: true, status: 'OK', timestamp: new Date() });
 });
 
-// ==================== RUTAS DE API ====================
+// ====================   MÓDULO 1: GESTIÓN DE USUARIOS ====================
 
 // Utilizar archivo de rutas (contiene autenticación, usuarios y roles)
 const authRoutes = require('./routes/auth.routes');
@@ -73,22 +76,38 @@ const authRoutes = require('./routes/auth.routes');
 app.use('/api/v1', authRoutes);
 
 // ==================== MÓDULO 2: INVENTARIO DE MÁQUINAS ====================
+
 app.use('/api/v1/maquinas', maquinaRoutes);
+
+// ==================== MÓDULO 3: SUSCRIPCIONES ====================
 
 app.use('/api/v1/suscripciones', suscripcionRoutes);
 
-// ==================== MÓDULO 4: GESTIÓN DE CLASES Y RESERVAS ====================
-
-
-//app.use('/api/v1/clases', claseRoutes);
-
-// ==================== MÓDULO 5: GESTIÓN DEPORTIVA ====================
+// ==================== MÓDULO 4: GESTIÓN DEPORTIVA ====================
 
 app.use('/api/v1/deportivo', deportivoRoutes);
 
-// ==================== MÓDULO 6: GESTIÓN DE RESERVAS ====================
+// ==================== MÓDULO 5: GESTIÓN DE RESERVAS ====================
 
 app.use('/api/v1/reservas', reservaRoutes);
+
+// ==================== MÓDULO 6: CONTROL DE ACCESOS ====================
+
+app.use('/api/v1/accesos', accesoRoutes);
+
+// ==================== MÓDULO 7: CONTROL DE BIOMETRICOS ====================
+
+app.use('/api/v1/biometricos', biometricoRoutes);
+
+// ==================== MÓDULO 8: TIENDA ====================
+
+app.use('/api/v1/tienda', tiendaRoutes);
+
+// ==================== MÓDULO 9: MANTENIMIENTO ====================
+
+app.use('/api/v1/mantenimientos', mantenimientoRoutes);
+
+
 
 // ==================== MANEJO DE ERRORES ====================
 app.use(errorHandler);
