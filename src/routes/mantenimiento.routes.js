@@ -9,7 +9,7 @@ const { checkRole } = require('../middlewares/rbac.middleware');
 
 /**
  * @swagger
- * /mantenimiento/tickets:
+ * /api/v1/mantenimiento/tickets:
  *   get:
  *     summary: Listar tickets de mantenimiento
  *     tags: [Mantenimiento]
@@ -40,7 +40,7 @@ router.get('/tickets', verifyToken, checkRole(['ADMIN', 'MANTENIMIENTO']), mante
 
 /**
  * @swagger
- * /mantenimiento/tickets/{id}:
+ * /api/v1/mantenimiento/tickets/{id}:
  *   get:
  *     summary: Obtener ticket por ID
  *     tags: [Mantenimiento]
@@ -61,7 +61,7 @@ router.get('/tickets/:id', verifyToken, checkRole(['ADMIN', 'MANTENIMIENTO']), m
 
 /**
  * @swagger
- * /mantenimiento/maquinas/{maquinaId}/tickets:
+ * /api/v1/mantenimiento/maquinas/{maquinaId}/tickets:
  *   get:
  *     summary: Listar tickets de una máquina
  *     tags: [Mantenimiento]
@@ -80,7 +80,7 @@ router.get('/maquinas/:maquinaId/tickets', verifyToken, checkRole(['ADMIN', 'MAN
 
 /**
  * @swagger
- * /mantenimiento/tickets:
+ * /api/v1/mantenimiento/tickets:
  *   post:
  *     summary: Crear ticket de mantenimiento
  *     description: Abre un ticket y cambia automáticamente el estado de la máquina a MANTENIMIENTO
@@ -113,7 +113,7 @@ router.post('/tickets', verifyToken, checkRole(['ADMIN', 'MANTENIMIENTO']), mant
 
 /**
  * @swagger
- * /mantenimiento/tickets/{id}/resolver:
+ * /api/v1/mantenimiento/tickets/{id}/resolver:
  *   put:
  *     summary: Resolver ticket de mantenimiento
  *     description: Cierra el ticket y cambia el estado de la máquina a ACTIVA
@@ -148,7 +148,7 @@ router.put('/tickets/:id/resolver', verifyToken, checkRole(['ADMIN', 'MANTENIMIE
 
 /**
  * @swagger
- * /mantenimiento/tickets/{id}:
+ * /api/v1/mantenimiento/tickets/{id}:
  *   delete:
  *     summary: Cancelar ticket
  *     tags: [Mantenimiento]
@@ -171,7 +171,7 @@ router.delete('/tickets/:id', verifyToken, checkRole(['ADMIN', 'MANTENIMIENTO'])
 
 /**
  * @swagger
- * /mantenimiento/reportes/maquina/{maquinaId}:
+ * /api/v1/mantenimiento/reportes/maquina/{maquinaId}:
  *   get:
  *     summary: Reporte de mantenimiento por máquina
  *     tags: [Mantenimiento]
@@ -206,7 +206,7 @@ router.get('/reportes/maquina/:maquinaId', verifyToken, checkRole(['ADMIN', 'FIN
 
 /**
  * @swagger
- * /mantenimiento/reportes/general:
+ * /api/v1/mantenimiento/reportes/general:
  *   get:
  *     summary: Reporte general de mantenimiento
  *     tags: [Mantenimiento]

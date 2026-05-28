@@ -9,7 +9,7 @@ const { checkRole } = require('../middlewares/rbac.middleware');
 
 /**
  * @swagger
- * /tienda/productos:
+ * /api/v1/tienda/productos:
  *   get:
  *     summary: Listar productos
  *     tags: [Tienda (POS)]
@@ -42,7 +42,7 @@ router.get('/productos', verifyToken, tiendaController.getAllProductos);
 
 /**
  * @swagger
- * /tienda/productos/{id}:
+ * /api/v1/tienda/productos/{id}:
  *   get:
  *     summary: Obtener producto por ID
  *     tags: [Tienda (POS)]
@@ -63,7 +63,7 @@ router.get('/productos/:id', verifyToken, tiendaController.getProductoById);
 
 /**
  * @swagger
- * /tienda/productos:
+ * /api/v1/tienda/productos:
  *   post:
  *     summary: Crear producto
  *     tags: [Tienda (POS)]
@@ -93,7 +93,7 @@ router.post('/productos', verifyToken, checkRole(['ADMIN', 'FINANZAS']), tiendaC
 
 /**
  * @swagger
- * /tienda/productos/{id}:
+ * /api/v1/tienda/productos/{id}:
  *   put:
  *     summary: Actualizar producto
  *     tags: [Tienda (POS)]
@@ -124,7 +124,7 @@ router.put('/productos/:id', verifyToken, checkRole(['ADMIN', 'FINANZAS']), tien
 
 /**
  * @swagger
- * /tienda/productos/{id}:
+ * /api/v1/tienda/productos/{id}:
  *   delete:
  *     summary: Eliminar producto
  *     tags: [Tienda (POS)]
@@ -147,7 +147,7 @@ router.delete('/productos/:id', verifyToken, checkRole(['ADMIN', 'FINANZAS']), t
 
 /**
  * @swagger
- * /tienda/productos/{id}/stock:
+ * /api/v1/tienda/productos/{id}/stock:
  *   patch:
  *     summary: Ajustar stock manualmente
  *     tags: [Tienda (POS)]
@@ -182,7 +182,7 @@ router.patch('/productos/:id/stock', verifyToken, checkRole(['ADMIN', 'FINANZAS'
 
 /**
  * @swagger
- * /tienda/ventas:
+ * /api/v1/tienda/ventas:
  *   get:
  *     summary: Listar todas las ventas
  *     tags: [Tienda (POS)]
@@ -205,7 +205,7 @@ router.get('/ventas', verifyToken, checkRole(['ADMIN', 'FINANZAS']), tiendaContr
 
 /**
  * @swagger
- * /tienda/ventas/cliente/{clienteId}:
+ * /api/v1/tienda/ventas/cliente/{clienteId}:
  *   get:
  *     summary: Listar ventas de un cliente
  *     tags: [Tienda (POS)]
@@ -224,7 +224,7 @@ router.get('/ventas/cliente/:clienteId', verifyToken, tiendaController.getVentas
 
 /**
  * @swagger
- * /tienda/ventas/{id}:
+ * /api/v1/tienda/ventas/{id}:
  *   get:
  *     summary: Obtener venta por ID
  *     tags: [Tienda (POS)]
@@ -245,7 +245,7 @@ router.get('/ventas/:id', verifyToken, tiendaController.getVentaById);
 
 /**
  * @swagger
- * /tienda/ventas:
+ * /api/v1/tienda/ventas:
  *   post:
  *     summary: Registrar nueva venta (POS)
  *     description: Registra una venta de productos y actualiza el stock automáticamente
@@ -287,7 +287,7 @@ router.post('/ventas', verifyToken, checkRole(['ADMIN', 'FINANZAS', 'RECEPCIONIS
 
 /**
  * @swagger
- * /tienda/ventas/{id}:
+ * /api/v1/tienda/ventas/{id}:
  *   delete:
  *     summary: Cancelar venta
  *     description: Cancela una venta y restaura el stock de los productos
@@ -313,7 +313,7 @@ router.delete('/ventas/:id', verifyToken, checkRole(['ADMIN', 'FINANZAS']), tien
 
 /**
  * @swagger
- * /tienda/reportes/ventas:
+ * /api/v1/tienda/reportes/ventas:
  *   get:
  *     summary: Reporte de ventas
  *     description: Genera un reporte con resumen de ventas y productos más vendidos

@@ -7,7 +7,7 @@ const { checkRole } = require('../middlewares/rbac.middleware');
 
 /**
  * @swagger
- * /acceso/entrada:
+ * /api/v1/acceso/entrada:
  *   post:
  *     summary: Registrar entrada por cédula (torniquete/recepción)
  *     description: Registra el ingreso de una persona al gimnasio y valida su membresía
@@ -66,7 +66,7 @@ router.post('/entrada', verifyToken, checkRole(['ADMIN', 'RECEPCIONISTA']), acce
 
 /**
  * @swagger
- * /acceso/verificar/{cedula}:
+ * /api/v1/acceso/verificar/{cedula}:
  *   get:
  *     summary: Verificar acceso sin registrar
  *     description: Verifica si un cliente puede acceder (sin registrar entrada)
@@ -100,7 +100,7 @@ router.get('/verificar/:cedula', verifyToken, checkRole(['ADMIN', 'RECEPCIONISTA
 
 /**
  * @swagger
- * /acceso/bitacora:
+ * /api/v1/acceso/bitacora:
  *   get:
  *     summary: Obtener bitácora de accesos
  *     description: Lista todos los intentos de acceso (solo ADMIN)
@@ -140,7 +140,7 @@ router.get('/bitacora', verifyToken, checkRole(['ADMIN']), accesoController.getB
 
 /**
  * @swagger
- * /acceso/cliente/{clienteId}:
+ * /api/v1/acceso/cliente/{clienteId}:
  *   get:
  *     summary: Obtener accesos de un cliente
  *     tags: [Control de Acceso]

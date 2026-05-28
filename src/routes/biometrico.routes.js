@@ -8,7 +8,7 @@ const { checkRole } = require('../middlewares/rbac.middleware');
 
 /**
  * @swagger
- * /biometrico/evaluaciones:
+ * /api/v1/biometrico/evaluaciones:
  *   post:
  *     summary: Registrar evaluación biométrica
  *     description: Los entrenadores pueden registrar evaluaciones físicas de los clientes
@@ -65,7 +65,7 @@ router.post('/evaluaciones', verifyToken, checkRole(['ENTRENADOR', 'ADMIN']), bi
 
 /**
  * @swagger
- * /biometrico/cliente/{clienteId}/historial:
+ * /api/v1/biometrico/cliente/{clienteId}/historial:
  *   get:
  *     summary: Obtener historial de evaluaciones
  *     description: Lista todas las evaluaciones de un cliente en orden cronológico
@@ -113,7 +113,7 @@ router.get('/cliente/:clienteId/historial', verifyToken, biometricoController.ge
 
 /**
  * @swagger
- * /biometrico/cliente/{clienteId}/ultima:
+ * /api/v1/biometrico/cliente/{clienteId}/ultima:
  *   get:
  *     summary: Obtener última evaluación
  *     tags: [Seguimiento Biométrico]
@@ -134,7 +134,7 @@ router.get('/cliente/:clienteId/ultima', verifyToken, biometricoController.getUl
 
 /**
  * @swagger
- * /biometrico/cliente/{clienteId}/progreso:
+ * /api/v1/biometrico/cliente/{clienteId}/progreso:
  *   get:
  *     summary: Obtener resumen de progreso
  *     description: Compara primera y última evaluación del cliente
@@ -167,7 +167,7 @@ router.get('/cliente/:clienteId/progreso', verifyToken, biometricoController.get
 
 /**
  * @swagger
- * /biometrico/evaluaciones/{id}:
+ * /api/v1/biometrico/evaluaciones/{id}:
  *   get:
  *     summary: Obtener evaluación por ID
  *     tags: [Seguimiento Biométrico]
@@ -188,7 +188,7 @@ router.get('/evaluaciones/:id', verifyToken, biometricoController.getEvaluacionB
 
 /**
  * @swagger
- * /biometrico/evaluaciones/{id}:
+ * /api/v1/biometrico/evaluaciones/{id}:
  *   put:
  *     summary: Actualizar evaluación
  *     tags: [Seguimiento Biométrico]
@@ -219,7 +219,7 @@ router.put('/evaluaciones/:id', verifyToken, checkRole(['ENTRENADOR', 'ADMIN']),
 
 /**
  * @swagger
- * /biometrico/evaluaciones/{id}:
+ * /api/v1/biometrico/evaluaciones/{id}:
  *   delete:
  *     summary: Eliminar evaluación
  *     tags: [Seguimiento Biométrico]
