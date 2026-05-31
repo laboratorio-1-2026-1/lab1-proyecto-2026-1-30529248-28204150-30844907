@@ -97,7 +97,7 @@ app.use('/api/v1/accesos', accesoRoutes);
 
 // ==================== MÓDULO 7: CONTROL DE BIOMETRICOS ====================
 
-app.use('/api/v1/biometricos', biometricoRoutes);
+app.use('/api/v1/biometrico', biometricoRoutes);
 
 // ==================== MÓDULO 8: TIENDA ====================
 
@@ -105,7 +105,7 @@ app.use('/api/v1/tienda', tiendaRoutes);
 
 // ==================== MÓDULO 9: MANTENIMIENTO ====================
 
-app.use('/api/v1/mantenimientos', mantenimientoRoutes);
+app.use('/api/v1/mantenimiento', mantenimientoRoutes);
 
 
 
