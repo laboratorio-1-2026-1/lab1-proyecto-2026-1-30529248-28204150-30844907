@@ -361,7 +361,10 @@ class SuscripcionService {
   
   async getPagosByCliente(clienteId, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
-    
+    // Verificar que el cliente existe
+    const cliente = await prisma.cliente.findUnique({ where: { id: parseInt(clienteId) } });
+    if (!cliente) throw { status: 404, message: 'Cliente no encontrado' };
+
     const [pagos, total] = await Promise.all([
       prisma.pago.findMany({
         where: {

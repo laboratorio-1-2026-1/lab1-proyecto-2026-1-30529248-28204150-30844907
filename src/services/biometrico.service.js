@@ -59,7 +59,10 @@ class BiometricoService {
   // Obtener historial de evaluaciones de un cliente
   async getHistorialByCliente(clienteId, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
-    
+    // Verificar que el cliente existe
+    const cliente = await prisma.cliente.findUnique({ where: { id: parseInt(clienteId) } });
+    if (!cliente) throw { status: 404, message: 'Cliente no encontrado' };
+
     const [evaluaciones, total] = await Promise.all([
       prisma.evaluacionBiometrica.findMany({
         where: { idCliente: parseInt(clienteId) },
@@ -189,6 +192,10 @@ class BiometricoService {
   
   // Resumen de progreso del cliente (primera y última evaluación)
   async getResumenProgreso(clienteId) {
+    // Verificar que el cliente existe
+    const cliente = await prisma.cliente.findUnique({ where: { id: parseInt(clienteId) } });
+    if (!cliente) throw { status: 404, message: 'Cliente no encontrado' };
+
     const [primera, ultima] = await Promise.all([
       prisma.evaluacionBiometrica.findFirst({
         where: { idCliente: parseInt(clienteId) },
@@ -199,11 +206,11 @@ class BiometricoService {
         orderBy: { fechaEvaluacion: 'desc' }
       })
     ]);
-    
+
     if (!primera || !ultima) {
       throw { status: 404, message: 'No hay suficientes evaluaciones para calcular progreso' };
     }
-    
+
     return {
       primeraEvaluacion: this.formatEvaluacion(primera),
       ultimaEvaluacion: this.formatEvaluacion(ultima),

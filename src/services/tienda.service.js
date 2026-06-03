@@ -8,19 +8,42 @@ class TiendaService {
   async getAllProductos(filtros = {}, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
     
+    // Validar flags mutuamente excluyentes
+    if (filtros.conStock === 'true' && filtros.sinStock === 'true') {
+      throw { status: 400, message: 'No puede solicitarse conStock y sinStock al mismo tiempo' };
+    }
+
+    // Si se filtró por nombre, verificar que exista al menos un producto con ese nombre (busqueda insensible)
+    if (filtros.nombre) {
+      const countName = await prisma.producto.count({ where: { nombre: { contains: filtros.nombre, mode: 'insensitive' } } });
+      if (countName === 0) {
+        throw { status: 404, message: 'Producto no encontrado' };
+      }
+    }
+
     const where = {};
     if (filtros.nombre) where.nombre = { contains: filtros.nombre, mode: 'insensitive' };
     if (filtros.stockMinimo) where.stock = { gte: parseInt(filtros.stockMinimo) };
     if (filtros.conStock === 'true') where.stock = { gt: 0 };
     if (filtros.sinStock === 'true') where.stock = { equals: 0 };
-    
+
     const [productos, total] = await Promise.all([
-      prisma.producto.findMany({
-        skip, take: limit, where, orderBy: { id: 'asc' }
-      }),
+      prisma.producto.findMany({ skip, take: limit, where, orderBy: { id: 'asc' } }),
       prisma.producto.count({ where })
     ]);
-    
+
+    // Si se pasó al menos un filtro y no hay resultados, devolver 404 con mensaje específico cuando sea posible
+    const anyFiltro = Object.values(filtros).some(v => v !== undefined && v !== null && v !== '');
+    if (anyFiltro && total === 0) {
+      if (filtros.nombre && filtros.conStock === 'true') {
+        throw { status: 404, message: 'El producto indicado no tiene unidades en stock' };
+      }
+      if (filtros.nombre && filtros.sinStock === 'true') {
+        throw { status: 404, message: 'El producto indicado tiene unidades en stock' };
+      }
+      throw { status: 404, message: 'No se encontraron productos con los filtros proporcionados' };
+    }
+
     return { data: productos, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
   
@@ -115,6 +138,10 @@ class TiendaService {
   
   async getVentasByCliente(clienteId, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
+    // Verificar que el cliente existe
+    const cliente = await prisma.cliente.findUnique({ where: { id: parseInt(clienteId) } });
+    if (!cliente) throw { status: 404, message: 'Cliente no encontrado' };
+
     const [ventas, total] = await Promise.all([
       prisma.compra.findMany({
         where: { idCliente: parseInt(clienteId) },
@@ -124,6 +151,7 @@ class TiendaService {
       }),
       prisma.compra.count({ where: { idCliente: parseInt(clienteId) } })
     ]);
+    if (total === 0) throw { status: 404, message: 'No se encontraron ventas para este cliente' };
     return { data: ventas, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
   
@@ -200,25 +228,54 @@ class TiendaService {
   
   async getReporteVentas(fechaInicio, fechaFin) {
     const where = {};
-    if (fechaInicio && fechaFin) {
-      where.fecha = { gte: new Date(fechaInicio), lte: new Date(fechaFin) };
+    // Validar fechas si vienen ambas
+    if (fechaInicio || fechaFin) {
+      const fechaI = fechaInicio ? new Date(fechaInicio) : null;
+      const fechaF = fechaFin ? new Date(fechaFin) : null;
+      if ((fechaInicio && isNaN(fechaI.getTime())) || (fechaFin && isNaN(fechaF.getTime()))) {
+        throw { status: 400, message: 'Fechas inválidas' };
+      }
+      if (fechaI && fechaF && fechaI > fechaF) {
+        throw { status: 400, message: 'La fecha de inicio no puede ser posterior a la fecha de fin' };
+      }
+      if (fechaI && fechaF && fechaI === fechaF) {
+        throw { status: 400, message: 'La fecha de inicio no puede ser igual que la fecha de fin' };
+      }
+      if (fechaI && fechaF) {
+        where.fecha = { gte: fechaI, lte: fechaF };
+      } else if (fechaI) {
+        where.fecha = { gte: fechaI };
+      } else if (fechaF) {
+        where.fecha = { lte: fechaF };
+      }
     }
     
     const ventas = await prisma.compra.findMany({
       where, include: { detalles: { include: { producto: true } }, cliente: { include: { usuario: true } } },
       orderBy: { fecha: 'desc' }
     });
+
+    if (ventas.length === 0) {
+      throw { status: 404, message: 'No se encontraron ventas en ese rango de fechas' };
+    }
     
-    const totalVentas = ventas.reduce((sum, v) => sum + v.monto, 0);
+    const totalVentas = ventas.reduce((sum, v) => sum + (v.monto || 0), 0);
     const productosVendidos = {};
-    
+
     for (const venta of ventas) {
       for (const detalle of venta.detalles) {
-        if (!productosVendidos[detalle.producto.nombre]) {
-          productosVendidos[detalle.producto.nombre] = { producto: detalle.producto.nombre, cantidad: 0, total: 0 };
+        const nombre = detalle.producto ? detalle.producto.nombre : 'Desconocido';
+        if (!productosVendidos[nombre]) {
+          productosVendidos[nombre] = { producto: nombre, cantidad: 0, total: 0 };
         }
-        productosVendidos[detalle.producto.nombre].cantidad += detalle.cantidad;
-        productosVendidos[detalle.producto.nombre].total += detalle.subtotal;
+        productosVendidos[nombre].cantidad += detalle.cantidad || 0;
+        // Calcular subtotal robustamente: usar detalle.subtotal si viene, si no usar precioUnitario * cantidad
+        const subtotal = (detalle.subtotal !== undefined && detalle.subtotal !== null)
+          ? Number(detalle.subtotal)
+          : ((detalle.precioUnitario !== undefined && detalle.precioUnitario !== null)
+            ? Number(detalle.precioUnitario) * Number(detalle.cantidad || 0)
+            : ((detalle.producto && detalle.producto.precio) ? Number(detalle.producto.precio) * Number(detalle.cantidad || 0) : 0));
+        productosVendidos[nombre].total += subtotal;
       }
     }
     

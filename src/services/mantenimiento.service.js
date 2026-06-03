@@ -12,29 +12,43 @@ class MantenimientoService {
     if (filtros.maquinaId) where.idMaquina = parseInt(filtros.maquinaId);
     if (filtros.estado) where.fechaResolucion = filtros.estado === 'ABIERTO' ? null : { not: null };
     
+    // Si se filtró por máquina, verificar existencia y estado
+    if (filtros.maquinaId) {
+      const maquina = await prisma.maquina.findUnique({ where: { id: parseInt(filtros.maquinaId) } });
+      if (!maquina) throw { status: 404, message: 'Máquina no encontrada' };
+      if (maquina.estado !== 'MANTENIMIENTO') throw { status: 400, message: 'La máquina no está en mantenimiento' };
+    }
+    
     const [tickets, total] = await Promise.all([
       prisma.ticketMantenimiento.findMany({
         skip, take: limit, where,
-        include: { maquina: true, usuario: { select: { id: true, email: true, nombre: true, apellido: true } } },
+        include: { maquina: true, usuario: { select: { id: true, email: true, idRol: true, descripcion: true, estado: true } } },
         orderBy: { fechaFalla: 'desc' }
       }),
       prisma.ticketMantenimiento.count({ where })
     ]);
-    
-    return { data: tickets, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+
+    // Añadir alias `costoReparacion` para compatibilidad con clientes que esperan ese campo
+    const ticketsMapped = tickets.map(t => ({ ...t, costoReparacion: t.costo }));
+
+    return { data: ticketsMapped, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
   
   async getTicketById(id) {
     const ticket = await prisma.ticketMantenimiento.findUnique({
       where: { id: parseInt(id) },
-      include: { maquina: true, usuario: { select: { id: true, email: true, nombre: true, apellido: true } } }
+      include: { maquina: true, usuario: { select: { id: true, email: true, idRol: true, descripcion: true, estado: true } } }
     });
     if (!ticket) throw { status: 404, message: 'Ticket no encontrado' };
-    return ticket;
+    return { ...ticket, costoReparacion: ticket.costo };
   }
   
   async getTicketsByMaquina(maquinaId, page = 1, limit = 10) {
-    return await this.getAllTickets({ maquinaId }, page, limit);
+    const result = await this.getAllTickets({ maquinaId }, page, limit);
+    if (result.pagination && result.pagination.total === 0) {
+      throw { status: 404, message: 'La máquina no posee tickets registrados' };
+    }
+    return result;
   }
   
   async crearTicket(data, usuarioId) {
@@ -68,7 +82,7 @@ class MantenimientoService {
   }
   
   async resolverTicket(id, data, usuarioId) {
-    const { costoReparacion, descripcionResolucion } = data;
+    const { costo, descripcionResolucion } = data;
     const ticket = await prisma.ticketMantenimiento.findUnique({ where: { id: parseInt(id) } });
     if (!ticket) throw { status: 404, message: 'Ticket no encontrado' };
     if (ticket.fechaResolucion) throw { status: 409, message: 'El ticket ya está resuelto' };
@@ -78,7 +92,7 @@ class MantenimientoService {
         where: { id: parseInt(id) },
         data: {
           fechaResolucion: new Date(),
-          costoReparacion: costoReparacion ? parseFloat(costoReparacion) : null
+          costo: costo ? parseFloat(costo) : null
         }
       });
       
@@ -102,7 +116,7 @@ class MantenimientoService {
     const ticketCancelado = await prisma.$transaction(async (tx) => {
       const ticketActualizado = await tx.ticketMantenimiento.update({
         where: { id: parseInt(id) },
-        data: { fechaResolucion: new Date(), costoReparacion: 0 }
+        data: { fechaResolucion: new Date(), costo: 0 }
       });
       
       await tx.maquina.update({
@@ -127,11 +141,11 @@ class MantenimientoService {
     
     const ticketsAbiertos = maquina.tickets.filter(t => !t.fechaResolucion);
     const ticketsResueltos = maquina.tickets.filter(t => t.fechaResolucion);
-    const costos = ticketsResueltos.reduce((sum, t) => sum + (t.costoReparacion || 0), 0);
+    const costos = ticketsResueltos.reduce((sum, t) => sum + (t.costo || 0), 0);
     
     return {
       maquina: { id: maquina.id, nombre: maquina.nombre, estado: maquina.estado },
-      tickets: maquina.tickets,
+      tickets: maquina.tickets.map(t => ({ ...t, costoReparacion: t.costo })),
       estadisticas: {
         totalTickets: maquina.tickets.length,
         ticketsAbiertos: ticketsAbiertos.length,
@@ -143,8 +157,22 @@ class MantenimientoService {
   
   async getReporteMantenimientoGeneral(fechaInicio, fechaFin) {
     const where = {};
-    if (fechaInicio && fechaFin) {
-      where.fechaFalla = { gte: new Date(fechaInicio), lte: new Date(fechaFin) };
+    // Validar fechas si se proporcionan
+    if (fechaInicio || fechaFin) {
+      const fi = fechaInicio ? new Date(fechaInicio) : null;
+      const ff = fechaFin ? new Date(fechaFin) : null;
+      if ((fechaInicio && isNaN(fi.getTime())) || (fechaFin && isNaN(ff.getTime()))) {
+        throw { status: 400, message: 'Fechas inválidas' };
+      }
+      if (fi && ff && fi.getTime() === ff.getTime()) {
+        throw { status: 400, message: 'La fecha de inicio y fin no pueden ser la misma' };
+      }
+      if (fi && ff && fi > ff) {
+        throw { status: 400, message: 'La fecha de inicio no puede ser posterior a la fecha de fin' };
+      }
+      if (fi && ff) where.fechaFalla = { gte: fi, lte: ff };
+      else if (fi) where.fechaFalla = { gte: fi };
+      else if (ff) where.fechaFalla = { lte: ff };
     }
     
     const tickets = await prisma.ticketMantenimiento.findMany({
@@ -153,7 +181,7 @@ class MantenimientoService {
     });
     
     const ticketsResueltos = tickets.filter(t => t.fechaResolucion);
-    const costoTotal = ticketsResueltos.reduce((sum, t) => sum + (t.costoReparacion || 0), 0);
+    const costoTotal = ticketsResueltos.reduce((sum, t) => sum + (t.costo || 0), 0);
     
     const maquinasMasMantenimiento = {};
     for (const ticket of tickets) {
@@ -163,6 +191,10 @@ class MantenimientoService {
       maquinasMasMantenimiento[ticket.maquina.nombre].cantidad++;
     }
     
+    if (tickets.length === 0) throw { status: 404, message: 'No hay tickets de mantenimiento en las fechas indicadas' };
+
+    const ticketsMapped = tickets.map(t => ({ ...t, costoReparacion: t.costo }));
+
     return {
       resumen: {
         totalTickets: tickets.length,
@@ -171,7 +203,7 @@ class MantenimientoService {
         costoTotalMantenimiento: costoTotal
       },
       maquinasConMasMantenimiento: Object.values(maquinasMasMantenimiento).sort((a, b) => b.cantidad - a.cantidad),
-      tickets
+      tickets: ticketsMapped
     };
   }
 }
