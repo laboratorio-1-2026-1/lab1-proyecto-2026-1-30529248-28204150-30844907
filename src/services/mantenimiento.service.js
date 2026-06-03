@@ -82,17 +82,25 @@ class MantenimientoService {
   }
   
   async resolverTicket(id, data, usuarioId) {
-    const { costo, descripcionResolucion } = data;
+    const { costo, costoReparacion } = data;
     const ticket = await prisma.ticketMantenimiento.findUnique({ where: { id: parseInt(id) } });
     if (!ticket) throw { status: 404, message: 'Ticket no encontrado' };
     if (ticket.fechaResolucion) throw { status: 409, message: 'El ticket ya está resuelto' };
     
     const ticketResuelto = await prisma.$transaction(async (tx) => {
+      // Determinar el valor de costo aceptando tanto `costo` como `costoReparacion`
+      let valorCosto = null;
+      if (typeof costo !== 'undefined' && costo !== null && costo !== '') {
+        valorCosto = parseFloat(costo);
+      } else if (typeof costoReparacion !== 'undefined' && costoReparacion !== null && costoReparacion !== '') {
+        valorCosto = parseFloat(costoReparacion);
+      }
+
       const ticketActualizado = await tx.ticketMantenimiento.update({
         where: { id: parseInt(id) },
         data: {
           fechaResolucion: new Date(),
-          costo: costo ? parseFloat(costo) : null
+          costo: valorCosto !== null ? valorCosto : null
         }
       });
       
@@ -127,7 +135,7 @@ class MantenimientoService {
       return ticketActualizado;
     });
     
-    return ticketCancelado;
+    return await this.getTicketById(ticketCancelado.id);
   }
   
   // ==================== REPORTES ====================
