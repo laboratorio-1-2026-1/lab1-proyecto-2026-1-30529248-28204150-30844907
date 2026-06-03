@@ -2,6 +2,19 @@ const prisma = require('../db/prisma');
 const { CODIGOS_ERROR } = require('../config/constantes');
 
 class DeportivoService {
+  // Formatea una sesión para respuesta: fecha -> YYYY-MM-DD, horas -> HH:MM
+  formatSesion(sesion) {
+    if (!sesion) return sesion;
+    const formatted = { ...sesion };
+    try {
+      if (formatted.fecha) formatted.fecha = new Date(formatted.fecha).toISOString().split('T')[0];
+      if (formatted.horaInicio) formatted.horaInicio = new Date(formatted.horaInicio).toISOString().substr(11, 5);
+      if (formatted.horaFin) formatted.horaFin = new Date(formatted.horaFin).toISOString().substr(11, 5);
+    } catch (err) {
+      // Si falla el formateo, devolver los valores originales
+    }
+    return formatted;
+  }
   // ==================== DISCIPLINAS (CRUD) ====================
   
   async getAllDisciplinas(page = 1, limit = 100) {
@@ -130,11 +143,16 @@ class DeportivoService {
       prisma.sesion.count({ where })
     ]);
 
-    // Si se filtró por fecha y no hay sesiones, devolver 404 para indicar que no se encontró
-    if (filtros.fecha && total === 0) {
-      throw { status: 404, code: CODIGOS_ERROR.NO_ENCONTRADO, message: 'No se encontraron sesiones para la fecha indicada' };
+    // Si se proporcionó al menos un filtro y no hay sesiones, devolver 404
+    const anyFiltro = Object.values(filtros).some(v => v !== undefined && v !== null && v !== '');
+    if (anyFiltro && total === 0) {
+      const message = filtros.fecha ? 'No se encontraron sesiones para la fecha indicada' : 'No se encontraron sesiones con los filtros proporcionados';
+      throw { status: 404, code: CODIGOS_ERROR.NO_ENCONTRADO, message };
     }
-    return { data: sesiones, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+
+    // Formatear sesiones para respuesta
+    const sesionesFormateadas = sesiones.map(s => this.formatSesion(s));
+    return { data: sesionesFormateadas, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
   
   async getSesionById(id) {
@@ -143,7 +161,7 @@ class DeportivoService {
       include: { disciplina: true, entrenador: { include: { usuario: { select: { id: true, email: true, estado: true, descripcion: true, idRol: true } } } } }
     });
     if (!sesion) throw { status: 404, message: 'Sesión no encontrada' };
-    return sesion;
+    return this.formatSesion(sesion);
   }
   
   async createSesion(data) {

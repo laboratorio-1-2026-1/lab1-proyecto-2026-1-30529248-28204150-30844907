@@ -2,6 +2,19 @@ const prisma = require('../db/prisma');
 const { CODIGOS_ERROR } = require('../config/constantes');
 
 class ReservaService {
+  // Formatea una sesión para respuesta: fecha -> YYYY-MM-DD, horas -> HH:MM
+  formatSesion(sesion) {
+    if (!sesion) return sesion;
+    const formatted = { ...sesion };
+    try {
+      if (formatted.fecha) formatted.fecha = new Date(formatted.fecha).toISOString().split('T')[0];
+      if (formatted.horaInicio) formatted.horaInicio = new Date(formatted.horaInicio).toISOString().substr(11, 5);
+      if (formatted.horaFin) formatted.horaFin = new Date(formatted.horaFin).toISOString().substr(11, 5);
+    } catch (err) {
+      // ignore and keep originals
+    }
+    return formatted;
+  }
   
   async getSesionesDisponibles(filtros = {}, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
@@ -22,14 +35,23 @@ class ReservaService {
       prisma.sesion.count({ where })
     ]);
     
+    // Si se proporcionó al menos un filtro y no hay sesiones disponibles, devolver 404
+    const anyFiltro = Object.values(filtros).some(v => v !== undefined && v !== null && v !== '');
+    if (anyFiltro && total === 0) {
+      throw { status: 404, code: CODIGOS_ERROR.NO_ENCONTRADO, message: 'No se encontraron sesiones disponibles con los filtros proporcionados' };
+    }
+    
     const sesionesConCupos = sesiones.map(sesion => ({
       ...sesion,
       cuposOcupados: sesion.reservas.length,
       cuposDisponibles: sesion.limiteDeCupos - sesion.reservas.length,
       hayCupos: (sesion.limiteDeCupos - sesion.reservas.length) > 0
     }));
-    
-    return { data: sesionesConCupos, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+
+    // Formatear fecha/hora en las sesiones resultantes
+    const sesionesFormateadas = sesionesConCupos.map(s => this.formatSesion(s));
+
+    return { data: sesionesFormateadas, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
   
   async crearReserva(usuarioId, sesionId) {
@@ -80,6 +102,8 @@ class ReservaService {
         include: { sesion: { include: { disciplina: true, entrenador: { include: { usuario: true } } } } }
       });
       console.log('crearReserva - reserva creada:', created && created.id);
+      // Formatear la sesión incluida antes de retornar
+      if (created && created.sesion) created.sesion = this.formatSesion(created.sesion);
       return created;
     } catch (err) {
       console.error('crearReserva - error creando reserva:', err);
@@ -107,7 +131,9 @@ class ReservaService {
       }),
       prisma.reserva.count({ where: { idCliente: parseInt(clienteId), estado: 'ACTIVA' } })
     ]);
-    return { data: reservas, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    // Formatear sesiones dentro de las reservas
+    const reservasFormateadas = reservas.map(r => ({ ...r, sesion: r.sesion ? this.formatSesion(r.sesion) : r.sesion }));
+    return { data: reservasFormateadas, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
   
   async cancelarReserva(reservaId, usuarioId) {
@@ -138,7 +164,8 @@ class ReservaService {
       }),
       prisma.reserva.count({ where: { idCliente: parseInt(clienteId) } })
     ]);
-    return { data: reservas, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    const reservasFormateadas = reservas.map(r => ({ ...r, sesion: r.sesion ? this.formatSesion(r.sesion) : r.sesion }));
+    return { data: reservasFormateadas, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
 }
 

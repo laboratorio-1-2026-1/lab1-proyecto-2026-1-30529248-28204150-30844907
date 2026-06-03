@@ -2,6 +2,13 @@ const prisma = require('../db/prisma');
 const { CODIGOS_ERROR } = require('../config/constantes');
 
 class AccesoService {
+  formatDate(date) {
+    try { return new Date(date).toISOString().split('T')[0]; } catch (e) { return date; }
+  }
+
+  formatDateTime(date) {
+    try { const s = new Date(date).toISOString(); return `${s.split('T')[0]} ${s.substr(11,5)}`; } catch (e) { return date; }
+  }
   
   // Registrar entrada por cédula
   async registrarEntrada(cedula) {
@@ -62,7 +69,7 @@ class AccesoService {
     const diasRestantes = Math.ceil((fechaFin - hoy) / (1000 * 60 * 60 * 24));
     
     return {
-      acceso,
+      acceso: acceso ? { ...acceso, fechaHoraEntrada: this.formatDateTime(acceso.fechaHoraEntrada) } : acceso,
       cliente: {
         id: cliente.id,
         nombre: cliente.nombre,
@@ -71,8 +78,8 @@ class AccesoService {
       },
       membresia: {
         plan: membresiaActiva.suscripcion.nombre,
-        fechaInicio: membresiaActiva.fechaInicio,
-        fechaFin: membresiaActiva.fechaFin,
+        fechaInicio: this.formatDate(membresiaActiva.fechaInicio),
+        fechaFin: this.formatDate(membresiaActiva.fechaFin),
         diasRestantes,
         estado: diasRestantes <= 7 ? 'POR_VENCER' : 'ACTIVA'
       }
@@ -125,8 +132,11 @@ class AccesoService {
       prisma.controlAcceso.count({ where })
     ]);
     
+    // Formatear fechaHoraEntrada en cada registro
+    const accesosFormateados = accesos.map(a => ({ ...a, fechaHoraEntrada: this.formatDateTime(a.fechaHoraEntrada) }));
+
     return {
-      data: accesos,
+      data: accesosFormateados,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
     };
   }
@@ -181,7 +191,7 @@ class AccesoService {
       },
       membresia: {
         plan: membresiaActiva.suscripcion.nombre,
-        fechaFin: membresiaActiva.fechaFin,
+        fechaFin: this.formatDate(membresiaActiva.fechaFin),
         diasRestantes,
         estado: diasRestantes <= 7 ? 'POR_VENCER' : 'ACTIVA'
       }

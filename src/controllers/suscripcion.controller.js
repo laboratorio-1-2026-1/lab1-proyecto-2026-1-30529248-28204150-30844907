@@ -83,6 +83,9 @@ class SuscripcionController {
     try {
       const { clienteId } = req.params;
       const membresia = await suscripcionService.getMembresiaActivaByCliente(clienteId);
+      if (!membresia) {
+        throw { status: 404, message: 'El cliente no tiene una membresía activa' };
+      }
       return res.status(HTTP_STATUS.OK).json({ success: true, data: membresia });
     } catch (error) {
       return next(error);

@@ -2,6 +2,15 @@ const prisma = require('../db/prisma');
 const { CODIGOS_ERROR } = require('../config/constantes');
 
 class BiometricoService {
+  // Formatea una evaluación: fechaEvaluacion -> YYYY-MM-DD
+  formatEvaluacion(evaluacion) {
+    if (!evaluacion) return evaluacion;
+    const formatted = { ...evaluacion };
+    try {
+      if (formatted.fechaEvaluacion) formatted.fechaEvaluacion = new Date(formatted.fechaEvaluacion).toISOString().split('T')[0];
+    } catch (err) { }
+    return formatted;
+  }
   
   // Registrar evaluación biométrica
   async registrarEvaluacion(data) {
@@ -44,7 +53,7 @@ class BiometricoService {
       }
     });
     
-    return nuevaEvaluacion;
+    return this.formatEvaluacion(nuevaEvaluacion);
   }
   
   // Obtener historial de evaluaciones de un cliente
@@ -84,9 +93,11 @@ class BiometricoService {
         }
       };
     });
+    // Formatear fechaEvaluacion en los resultados
+    const evaluacionesFormateadas = evaluacionesConEvolucion.map(ev => this.formatEvaluacion(ev));
     
     return {
-      data: evaluacionesConEvolucion,
+      data: evaluacionesFormateadas,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
     };
   }
@@ -107,7 +118,7 @@ class BiometricoService {
       throw { status: 404, message: 'No hay evaluaciones para este cliente' };
     }
     
-    return evaluacion;
+    return this.formatEvaluacion(evaluacion);
   }
   
   // Obtener evaluación por ID
@@ -128,7 +139,7 @@ class BiometricoService {
       throw { status: 404, message: 'Evaluación no encontrada' };
     }
     
-    return evaluacion;
+    return this.formatEvaluacion(evaluacion);
   }
   
   // Actualizar evaluación
@@ -149,13 +160,14 @@ class BiometricoService {
     if (porcentajeGrasa !== undefined) updateData.porcentajeGrasa = parseFloat(porcentajeGrasa);
     if (observaciones !== undefined) updateData.observaciones = observaciones;
     
-    return await prisma.evaluacionBiometrica.update({
+    const updated = await prisma.evaluacionBiometrica.update({
       where: { id: parseInt(id) },
       data: updateData,
       include: {
         entrenador: { include: { usuario: true } }
       }
     });
+    return this.formatEvaluacion(updated);
   }
   
   // Eliminar evaluación
@@ -193,8 +205,8 @@ class BiometricoService {
     }
     
     return {
-      primeraEvaluacion: primera,
-      ultimaEvaluacion: ultima,
+      primeraEvaluacion: this.formatEvaluacion(primera),
+      ultimaEvaluacion: this.formatEvaluacion(ultima),
       progreso: {
         peso: (ultima.peso - primera.peso).toFixed(1),
         porcentajeGrasa: ultima.porcentajeGrasa && primera.porcentajeGrasa 
