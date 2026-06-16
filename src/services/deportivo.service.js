@@ -137,7 +137,25 @@ class DeportivoService {
     const [sesiones, total] = await Promise.all([
       prisma.sesion.findMany({
         skip, take: limit, where,
-        include: { disciplina: true, entrenador: { include: { usuario: { select: { id: true, email: true, estado: true, descripcion: true, idRol: true } } } } },
+        select: {  
+          id: true,
+          nombre: true,        
+          idDisciplina: true,
+          idEntrenador: true,
+          fecha: true,
+          horaInicio: true,
+          horaFin: true,
+          limiteDeCupos: true,
+          estado: true,
+          disciplina: true,    
+          entrenador: {
+            include: {
+              usuario: {
+                select: { id: true, email: true, estado: true, descripcion: true, idRol: true }
+              }
+            }
+          }
+        },
         orderBy: [{ fecha: 'asc' }, { horaInicio: 'asc' }]
       }),
       prisma.sesion.count({ where })
@@ -165,7 +183,8 @@ class DeportivoService {
   }
   
   async createSesion(data) {
-    const { idDisciplina, idEntrenador, fecha, horaInicio, horaFin, limiteDeCupos } = data;
+    const {nombre, idDisciplina, idEntrenador, fecha, horaInicio, horaFin, limiteDeCupos } = data;
+    if (!nombre) throw { status: 400, message: 'El nombre de la sesión es requerido' };
     if (!idDisciplina) throw { status: 400, message: 'La disciplina es requerida' };
     if (!idEntrenador) throw { status: 400, message: 'El entrenador es requerido' };
     if (!fecha) throw { status: 400, message: 'La fecha es requerida' };
@@ -197,7 +216,7 @@ class DeportivoService {
     
     return await prisma.sesion.create({
       data: {
-        idDisciplina: parseInt(idDisciplina), idEntrenador: parseInt(idEntrenador),
+        nombre: nombre, idDisciplina: parseInt(idDisciplina), idEntrenador: parseInt(idEntrenador),
         fecha: fechaObj, horaInicio: inicio, horaFin: fin,
         limiteDeCupos: limiteDeCupos || 20, estado: 'PROGRAMADA'
       },
