@@ -15,8 +15,12 @@ const options = {
     },
     servers: [
       {
-        url: url,
-        description: 'Servidor de desarrollo'
+        url: process.env.NODE_ENV === 'production' 
+          ? 'https://lab1-proyecto-2026-1-30529248-28204150.onrender.com' 
+          : 'http://localhost:3000',
+        description: process.env.NODE_ENV === 'production' 
+          ? 'Servidor de producción' 
+          : 'Servidor de desarrollo'
       }
     ],
     tags: [
