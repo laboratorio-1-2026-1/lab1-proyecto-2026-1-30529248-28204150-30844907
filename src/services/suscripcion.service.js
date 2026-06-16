@@ -123,6 +123,9 @@ class SuscripcionService {
   
   async getMembresiasByCliente(clienteId, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
+    // Verificar que el cliente existe
+    const cliente = await prisma.cliente.findUnique({ where: { id: parseInt(clienteId) } });
+    if (!cliente) throw { status: 404, message: 'Cliente no encontrado' };
     
     const [membresias, total] = await Promise.all([
       prisma.membresia.findMany({
@@ -151,6 +154,10 @@ class SuscripcionService {
   }
   
   async getMembresiaActivaByCliente(clienteId) {
+    // Verificar que el cliente existe
+    const cliente = await prisma.cliente.findUnique({ where: { id: parseInt(clienteId) } });
+    if (!cliente) throw { status: 404, message: 'Cliente no encontrado' };
+
     const membresia = await prisma.membresia.findFirst({
       where: {
         idCliente: parseInt(clienteId),
@@ -325,7 +332,10 @@ class SuscripcionService {
   
   async getPagosByMembresia(membresiaId, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
-    
+    // Verificar que la membresía existe
+    const membresiaExist = await prisma.membresia.findUnique({ where: { id: parseInt(membresiaId) } });
+    if (!membresiaExist) throw { status: 404, message: 'Membresía no encontrada' };
+
     const [pagos, total] = await Promise.all([
       prisma.pago.findMany({
         where: { idMembresia: parseInt(membresiaId) },
@@ -351,7 +361,10 @@ class SuscripcionService {
   
   async getPagosByCliente(clienteId, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
-    
+    // Verificar que el cliente existe
+    const cliente = await prisma.cliente.findUnique({ where: { id: parseInt(clienteId) } });
+    if (!cliente) throw { status: 404, message: 'Cliente no encontrado' };
+
     const [pagos, total] = await Promise.all([
       prisma.pago.findMany({
         where: {

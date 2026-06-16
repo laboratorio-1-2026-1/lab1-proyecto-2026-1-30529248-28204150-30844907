@@ -115,6 +115,7 @@ model Disciplina {
 
 model Sesion {
   id             Int        @id @default(autoincrement())
+  nombre         String?
   idDisciplina   Int        @map("idDisciplina")
   idEntrenador   Int        @map("idEntrenador")
   fecha          DateTime

@@ -86,6 +86,7 @@ CREATE TABLE "Disciplina" (
 -- CreateTable
 CREATE TABLE "Sesion" (
     "id" SERIAL NOT NULL,
+    "nombre" TEXT,
     "idDisciplina" INTEGER NOT NULL,
     "idEntrenador" INTEGER NOT NULL,
     "fecha" TIMESTAMP(3) NOT NULL,
