@@ -1,4 +1,5 @@
 const swaggerJsdoc = require('swagger-jsdoc');
+const url = 'http://localhost:3000' || 'https://lab1-proyecto-2026-1-30529248-28204150.onrender.com';
 
 const options = {
   definition: {
@@ -14,7 +15,7 @@ const options = {
     },
     servers: [
       {
-        url: 'http://localhost:3000',
+        url: url,
         description: 'Servidor de desarrollo'
       }
     ],
